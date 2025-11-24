@@ -1,9 +1,11 @@
-import { coursesRouter } from "@/services/courses/server/routers";
+import { notesRouter } from "@/services/notes/server/router";
 import { createTRPCRouter } from "../init";
-import { subjectsRouter } from "@/services/subjects/server/router";
+import { tagsRouter } from "@/services/tags/server/router";
+import { foldersRouter } from "@/services/folders/server/router";
 export const appRouter = createTRPCRouter({
-  courses: coursesRouter,
-  subjects: subjectsRouter,
+  notes: notesRouter,
+  tags: tagsRouter,
+  folders: foldersRouter,
 });
 // export type definition of API
 export type AppRouter = typeof appRouter;
