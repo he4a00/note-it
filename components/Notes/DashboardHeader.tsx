@@ -1,13 +1,13 @@
 "use client";
 
 import React from "react";
-import CreateNoteModel from "./CreateNoteModel";
 import { ThemeToggle } from "../shared/ThemeToggle";
+import NewDropDown from "./NewDropDown";
 
 const DashboardHeader = () => {
   return (
     <div className="flex items-center gap-2 justify-end w-full container mx-auto">
-      <CreateNoteModel />
+      <NewDropDown />
       <ThemeToggle />
     </div>
   );

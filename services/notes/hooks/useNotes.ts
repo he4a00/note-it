@@ -19,19 +19,27 @@ export const useCreateNote = () => {
     trpc.notes.create.mutationOptions({
       onSuccess: () => {
         toast.success("Note created successfully");
-        queryClient.invalidateQueries(trpc.notes.getAll.queryOptions());
+        queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
       },
-      onError: (error) => {
+      onError: () => {
         toast.error("Note creation failed");
       },
     })
   );
 };
 
-export const useSuspenseNotes = (filters?: RouterInputs["notes"]["getAll"]) => {
+export const useSuspenseNotes = (
+  filters?: RouterInputs["notes"]["getAllNotes"]
+) => {
   const trpc = useTRPC();
 
-  return useSuspenseQuery(trpc.notes.getAll.queryOptions(filters));
+  return useSuspenseQuery(trpc.notes.getAllNotes.queryOptions(filters));
+};
+
+export const useSuspenseTemplates = () => {
+  const trpc = useTRPC();
+
+  return useSuspenseQuery(trpc.notes.getAllTemplates.queryOptions());
 };
 
 export const useGetNote = (id: string) => {
@@ -67,7 +75,10 @@ export const useDeleteNote = () => {
     trpc.notes.delete.mutationOptions({
       onSuccess: () => {
         toast.success("Note deleted successfully");
-        queryClient.invalidateQueries(trpc.notes.getAll.queryOptions());
+        queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
+        queryClient.invalidateQueries(
+          trpc.notes.getAllTemplates.queryOptions()
+        );
       },
       onError: (error) => {
         console.log(error);
@@ -84,7 +95,10 @@ export const useUpdateNote = () => {
     trpc.notes.update.mutationOptions({
       onSuccess: (data) => {
         console.log(data);
-        queryClient.invalidateQueries(trpc.notes.getAll.queryOptions());
+        queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
+        queryClient.invalidateQueries(
+          trpc.notes.getAllTemplates.queryOptions()
+        );
         queryClient.invalidateQueries(
           trpc.notes.getOne.queryOptions({ id: data.id })
         );
@@ -104,7 +118,10 @@ export const useTogglePinNote = () => {
     trpc.notes.togglePin.mutationOptions({
       onSuccess: (data) => {
         toast.success("Note pinned successfully");
-        queryClient.invalidateQueries(trpc.notes.getAll.queryOptions());
+        queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
+        queryClient.invalidateQueries(
+          trpc.notes.getAllTemplates.queryOptions()
+        );
         queryClient.invalidateQueries(
           trpc.notes.getOne.queryOptions({ id: data.id })
         );

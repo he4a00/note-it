@@ -71,8 +71,14 @@ model Verification {
   @@map("verification")
 }
 
+enum NoteType {
+  NOTE
+  TEMPLATE
+}
+
 model Note {
   id         String    @id @default(cuid())
+  type       NoteType  @default(NOTE)
   title      String
   content    String
   isPinned   Boolean   @default(false)

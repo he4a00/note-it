@@ -8,8 +8,10 @@ export const notesRouter = createTRPCRouter({
       z.object({
         title: z.string(),
         content: z.string(),
-        folderId: z.string(),
+        folderId: z.string().nullable().optional(),
+        type: z.enum(["NOTE", "TEMPLATE"]),
         tagIds: z.array(z.string()).optional(),
+        userId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -17,13 +19,24 @@ export const notesRouter = createTRPCRouter({
         data: {
           title: input.title,
           content: input.content,
-          folderId: input.folderId,
+          ...(input.folderId && {
+            folder: {
+              connect: {
+                id: input.folderId,
+              },
+            },
+          }),
+          type: input.type,
           tags: {
             connect: input.tagIds?.map((tagId) => ({
               id: tagId,
             })),
           },
-          userId: ctx.auth.user.id,
+          user: {
+            connect: {
+              id: ctx.auth.user.id || input.userId,
+            },
+          },
         },
       });
     }),
@@ -43,7 +56,7 @@ export const notesRouter = createTRPCRouter({
       });
     }),
 
-  getAll: protectedProcedure
+  getAllNotes: protectedProcedure
     .input(
       z
         .object({
@@ -65,6 +78,7 @@ export const notesRouter = createTRPCRouter({
           isPinned: isPinned,
           isArchived: isArchived,
           tags: tagId ? { some: { id: tagId } } : undefined,
+          // type: "NOTE",
 
           OR: search
             ? [
@@ -91,6 +105,7 @@ export const notesRouter = createTRPCRouter({
         content: z.string().optional(),
         folderId: z.string().nullable().optional(),
         tagIds: z.array(z.string()).optional(),
+        type: z.enum(["NOTE", "TEMPLATE"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -103,6 +118,7 @@ export const notesRouter = createTRPCRouter({
           title: input.title,
           content: input.content,
           folderId: input.folderId,
+          type: input.type,
           tags: {
             set:
               input.tagIds?.map((tagId) => ({
@@ -144,6 +160,49 @@ export const notesRouter = createTRPCRouter({
         },
         data: {
           isPinned: !note.isPinned,
+        },
+      });
+    }),
+
+  getAllTemplates: protectedProcedure
+    .input(
+      z
+        .object({
+          folderId: z.string().optional(),
+          tagId: z.string().optional(),
+          isPinned: z.boolean().optional(),
+          isArchived: z.boolean().optional(),
+          search: z.string().optional(),
+        })
+        .optional()
+    )
+    .query(async ({ ctx, input }) => {
+      const { folderId, tagId, isPinned, isArchived, search } = input || {};
+
+      return await prisma.note.findMany({
+        where: {
+          folderId: folderId,
+          isPinned: isPinned,
+          isArchived: isArchived,
+          tags: tagId ? { some: { id: tagId } } : undefined,
+          type: "TEMPLATE",
+          userId: {
+            not: ctx.auth.user.id,
+          },
+          OR: search
+            ? [
+                { title: { contains: search, mode: "insensitive" } },
+                { content: { contains: search, mode: "insensitive" } },
+              ]
+            : undefined,
+        },
+        orderBy: {
+          updatedAt: "desc",
+        },
+        include: {
+          folder: true,
+          tags: true,
+          user: true,
         },
       });
     }),

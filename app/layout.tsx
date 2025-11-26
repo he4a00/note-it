@@ -1,12 +1,23 @@
 import type { Metadata } from "next";
-import { Cairo, Roboto, Roboto_Mono } from "next/font/google";
+import { Cairo, Inter, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { TRPCReactProvider } from "@/trpc/client";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
 
-const robotoMono = Roboto({
-  variable: "--font-roboto-mono",
+const cairo = Cairo({
+  variable: "--font-cairo",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
+
+const sourceSerif = Source_Serif_4({
+  variable: "--font-source-serif",
   subsets: ["latin"],
 });
 
@@ -23,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${robotoMono.variable}`}
+      className={`${cairo.variable} ${inter.variable} ${sourceSerif.variable}`}
       suppressHydrationWarning
     >
       <body>

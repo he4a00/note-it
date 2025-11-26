@@ -1,10 +1,14 @@
 import NotesList from "@/components/Notes/NotesList";
 import { requireAuth } from "@/lib/auth-utils";
-import { prefetchNotes } from "@/services/notes/server/prefetch";
+import {
+  prefetchNotes,
+  prefetchTemplates,
+} from "@/services/notes/server/prefetch";
 
 const DashboardPage = async () => {
   await requireAuth();
-  prefetchNotes();
+  prefetchNotes({});
+  prefetchTemplates({});
   return (
     <div>
       <NotesList />
