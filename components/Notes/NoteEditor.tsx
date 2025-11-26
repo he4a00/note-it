@@ -10,6 +10,16 @@ import { useNote, useUpdateNote } from "@/services/notes/hooks/useNotes";
 import CreateNoteHeader from "./CreateNoteHeader";
 import { Tag } from "@/lib/generated/prisma";
 import { formatDistanceToNow } from "date-fns";
+import { Check, Cloud, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface NotesEditorProps {
   onEditorReady?: (editor: BlockNoteEditor) => void;
@@ -30,11 +40,13 @@ export default function NotesEditor({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [internalContent, setInternalContent] = useState<string>("");
   const [lastSavedContent, setLastSavedContent] = useState<string>("");
+  const [title, setTitle] = useState<string>("");
   const [tagsId, setTagsId] = useState<string[]>([]);
   const [folderId, setFolderId] = useState<string>("");
+  const [noteType, setNoteType] = useState<"NOTE" | "TEMPLATE">("NOTE");
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { theme } = useTheme();
-  const { data: noteData } = useNote(noteId);
+  const { data: noteData, isLoading: isLoadingNote } = useNote(noteId);
   const updateNoteMutation = useUpdateNote();
   const currentContent = noteContent ?? internalContent;
 
@@ -48,14 +60,16 @@ export default function NotesEditor({
     async (
       content: string,
       currentTagsId: string[],
-      currentFolderId: string
+      currentFolderId: string,
+      currentTitle: string
     ) => {
       if (
         !noteId ||
         (content === lastSavedContent &&
           JSON.stringify(currentTagsId) ===
             JSON.stringify(noteData?.tags?.map((t: Tag) => t.id) || []) &&
-          currentFolderId === noteData?.folderId) ||
+          currentFolderId === noteData?.folderId &&
+          currentTitle === noteData?.title) ||
         !content.trim() ||
         content === "[]"
       )
@@ -66,6 +80,7 @@ export default function NotesEditor({
         {
           id: noteId,
           content,
+          title: currentTitle || "Untitled",
           tagIds: currentTagsId,
           folderId: currentFolderId || null,
         },
@@ -114,6 +129,9 @@ export default function NotesEditor({
         if (noteData.folderId) {
           setFolderId(noteData.folderId);
         }
+        if (noteData.title) {
+          setTitle(noteData.title);
+        }
       }
     }
     loadInitialData();
@@ -126,7 +144,7 @@ export default function NotesEditor({
       }
 
       saveTimeoutRef.current = setTimeout(() => {
-        saveNotes(currentContent, tagsId, folderId);
+        saveNotes(currentContent, tagsId, folderId, title);
       }, 2500);
     }
 
@@ -135,16 +153,16 @@ export default function NotesEditor({
         clearTimeout(saveTimeoutRef.current);
       }
     };
-  }, [currentContent, saveNotes, lastSavedContent, tagsId, folderId]);
+  }, [currentContent, saveNotes, lastSavedContent, tagsId, folderId, title]);
 
   const handleBlur = useCallback(() => {
     if (currentContent && currentContent !== lastSavedContent) {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
-      saveNotes(currentContent, tagsId, folderId);
+      saveNotes(currentContent, tagsId, folderId, title);
     }
-  }, [currentContent, lastSavedContent, saveNotes, tagsId, folderId]);
+  }, [currentContent, lastSavedContent, saveNotes, tagsId, folderId, title]);
 
   const handleTagsChange = (newTagsId: string[]) => {
     setTagsId(newTagsId);
@@ -168,70 +186,167 @@ export default function NotesEditor({
     });
   };
 
+  const handleNoteTypeChange = (newNoteType: "NOTE" | "TEMPLATE") => {
+    setNoteType(newNoteType);
+    // Immediate save for note type
+    updateNoteMutation.mutate({
+      id: noteId!,
+      type: newNoteType,
+      tagIds: tagsId,
+      folderId: folderId || null,
+      content: currentContent,
+    });
+  };
+
+  const handleTitleChange = (newTitle: string) => {
+    setTitle(newTitle);
+  };
+
   const bnTheme = {
-    light: { colors: { editor: { background: "#f4f8fb" } } },
-    dark: { colors: { editor: { background: "#1c2433" } } },
+    light: {
+      colors: {
+        editor: {
+          background: "transparent",
+          text: "var(--foreground)",
+        },
+      },
+      fontFamily: "var(--font-serif)",
+    },
+    dark: {
+      colors: {
+        editor: {
+          background: "transparent",
+          text: "var(--foreground)",
+        },
+      },
+      fontFamily: "var(--font-serif)",
+    },
   };
 
-  const getSaveStatusText = () => {
-    switch (saveStatus) {
-      case "saving":
-        return "Saving...";
-      case "saved":
-        return "Saved";
-      case "error":
-        return "Error saving";
-      default:
-        return "";
-    }
-  };
-
-  const getSaveStatusColor = () => {
-    switch (saveStatus) {
-      case "saving":
-        return "text-blue-500";
-      case "saved":
-        return "text-green-500";
-      case "error":
-        return "text-red-500";
-      default:
-        return "text-transparent";
-    }
-  };
+  if (noteId && isLoadingNote) {
+    return (
+      <div className="w-full h-full flex flex-col gap-4 container mx-auto px-8 py-6">
+        <div className="flex flex-row justify-between items-center">
+          <div className="flex gap-2">
+            <div className="h-8 w-24 bg-muted animate-pulse rounded-md" />
+            <div className="h-8 w-32 bg-muted animate-pulse rounded-md" />
+          </div>
+          <div className="h-4 w-40 bg-muted animate-pulse rounded-md" />
+        </div>
+        <div className="flex justify-between items-center mb-2 mt-3">
+          <div className="h-3 w-16 bg-muted animate-pulse rounded-md" />
+        </div>
+        <div className="w-full flex-1 bg-muted/30 animate-pulse rounded-lg" />
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full h-full max-h-[calc(100vh-5rem)] mt-5">
-      <div className="flex flex-row justify-between items-center">
-        {noteId && (
-          <>
-            <CreateNoteHeader
-              tagsId={tagsId}
-              setTagsId={handleTagsChange}
-              folderId={folderId}
-              setFolderId={handleFolderChange}
-            />
-            <p className="text-muted-foreground">
-              Last Edited:{" "}
-              {noteData?.updatedAt &&
-                formatDistanceToNow(new Date(noteData.updatedAt), {
-                  addSuffix: true,
-                })}
-            </p>
-          </>
-        )}
-      </div>
-      <div className="flex justify-between items-center mb-2 mt-3">
+    <div className="flex flex-row h-full w-full bg-background min-h-screen">
+      {/* Main Editor Area */}
+      <div className="flex-1 flex flex-col items-center relative">
         <div
-          className={`text-xs transition-opacity duration-300 ${getSaveStatusColor()}`}
+          className={cn("w-full max-w-5xl flex flex-col gap-8", noteId && "")}
         >
-          {getSaveStatusText()}
+          {/* Header Section */}
+          <div className="flex flex-col gap-2 group">
+            <div className="flex items-center justify-between h-6">
+              {/* Breadcrumbs */}
+              <Breadcrumb>
+                <BreadcrumbList className="text-sm">
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  {noteData?.folder && (
+                    <>
+                      <BreadcrumbSeparator />
+                      <BreadcrumbItem>
+                        <BreadcrumbLink
+                          href={`/dashboard?folder=${noteData.folder.id}`}
+                        >
+                          {noteData.folder.name}
+                        </BreadcrumbLink>
+                      </BreadcrumbItem>
+                    </>
+                  )}
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="text-muted-foreground">
+                      {noteData?.title} (
+                      {noteType === "TEMPLATE" ? "Template" : "Note"})
+                    </BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+
+              {/* Save Status Indicator */}
+              {noteId && (
+                <div className="flex items-center justify-end min-w-[100px] duration-500">
+                  {updateNoteMutation.isPending || saveStatus === "saving" ? (
+                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground duration-300">
+                      <Loader2 className="animate-spin h-3.5 w-3.5" />
+                      <span>Saving...</span>
+                    </div>
+                  ) : saveStatus === "saved" ? (
+                    <div className="flex items-center gap-2 text-xs font-medium text-green-600 dark:text-green-500 duration-300">
+                      <Check className="h-3.5 w-3.5" />
+                      <span>Saved</span>
+                    </div>
+                  ) : saveStatus === "error" ? (
+                    <div className="flex items-center gap-2 text-xs font-medium text-destructive duration-300">
+                      <span>Error saving</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground">
+                      <Cloud className="h-3.5 w-3.5" />
+                      <span>
+                        {noteData?.updatedAt
+                          ? `Edited ${formatDistanceToNow(
+                              new Date(noteData.updatedAt),
+                              {
+                                addSuffix: true,
+                              }
+                            )}`
+                          : "All changes saved"}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {noteId && (
+              <CreateNoteHeader
+                title={title}
+                onTitleChange={handleTitleChange}
+                tagsId={tagsId}
+                setTagsId={handleTagsChange}
+                folderId={folderId}
+                setFolderId={handleFolderChange}
+                noteType={noteType}
+                setNoteType={handleNoteTypeChange}
+              />
+            )}
+          </div>
+
+          {/* Editor Content */}
+          <div className="flex-1 relative min-h-[500px]">
+            <div className="font-serif">
+              <BlockNoteView
+                editor={editor}
+                theme={theme === "dark" ? bnTheme.dark : bnTheme.light}
+                onBlur={handleBlur}
+                className={cn(
+                  "h-full min-h-full",
+                  "font-serif text-lg leading-relaxed",
+                  "[&_.bn-editor]:px-0",
+                  "[&_.bn-block-content]:text-foreground/90"
+                )}
+              />
+            </div>
+          </div>
         </div>
       </div>
-      <BlockNoteView
-        editor={editor}
-        theme={theme === "dark" ? bnTheme.dark : bnTheme.light}
-        onBlur={handleBlur}
-      />
     </div>
   );
 }

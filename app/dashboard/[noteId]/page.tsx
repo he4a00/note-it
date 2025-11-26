@@ -8,7 +8,7 @@ const NotePage = async ({
   const { noteId } = await params;
 
   return (
-    <div className="px-20 py-10">
+    <div className="w-full h-full">
       <NotesEditor noteId={noteId} />
     </div>
   );

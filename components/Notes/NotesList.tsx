@@ -11,7 +11,7 @@ import {
 import { extractTextFromBlockNote } from "@/lib/utils/extractTextFromBlockNote";
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
-import { Calendar, Pin } from "lucide-react";
+import { Calendar, Pin, FileText, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import NoteToolbox from "./NoteToolbox";
 import { Suspense, useState, useTransition } from "react";
@@ -19,12 +19,13 @@ import { EmptyComponent } from "../shared/entity-components";
 import ViewToggle from "./ViewToggle";
 import NotesFilter from "./NotesFilter";
 import { useDebounce } from "@/hooks/use-debounce";
+import { formatDistanceToNow } from "date-fns";
 
 const NotesList = () => {
   const [tagId, setTagId] = useState("");
   const [folderId, setFolderId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isPinned, setIsPinned] = useState(false);
+  const [isPinned, setIsPinned] = useState<boolean | undefined>(undefined);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [isPending, startTransition] = useTransition();
 
@@ -32,9 +33,16 @@ const NotesList = () => {
     tagId,
     // folderId,
     search: debouncedSearchQuery,
-    isPinned,
+    isPinned: isPinned === true ? true : undefined, // Only filter when explicitly true
   });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  // Sort notes to show pinned ones first
+  const sortedData = [...data].sort((a, b) => {
+    if (a.isPinned && !b.isPinned) return -1;
+    if (!a.isPinned && b.isPinned) return 1;
+    return 0;
+  });
 
   const handleSetTagId = (id: string) => {
     startTransition(() => {
@@ -48,7 +56,7 @@ const NotesList = () => {
     });
   };
 
-  const handleSetIsPinned = (isPinned: boolean) => {
+  const handleSetIsPinned = (isPinned: boolean | undefined) => {
     startTransition(() => {
       setIsPinned(isPinned);
     });
@@ -57,9 +65,16 @@ const NotesList = () => {
   if (isLoading) return <div>Loading...</div>;
 
   return (
-    <div className="flex flex-col gap-4 p-5">
-      <div className="flex flex-row justify-between items-center">
-        <h1 className="text-2xl font-bold">Recent Notes</h1>
+    <div className="flex flex-col gap-8 p-6 container mx-auto w-full">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-serif font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            My Notes
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Manage and organize your thoughts.
+          </p>
+        </div>
         <div className="flex flex-row items-center gap-6">
           <NotesFilter
             tagId={tagId}
@@ -74,12 +89,25 @@ const NotesList = () => {
           <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
         </div>
       </div>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense
+        fallback={
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="h-[240px] rounded-xl bg-zinc-100 dark:bg-zinc-800 animate-pulse"
+              />
+            ))}
+          </div>
+        }
+      >
         <div
           className={cn(
-            "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 py-10 w-full transition-all",
-            viewMode === "list" ? "lg:grid-cols-1 px-30 py-10" : "grid-cols-3",
-            isPending ? "opacity-50" : "opacity-100"
+            "grid gap-6 w-full transition-all duration-500 ease-in-out",
+            viewMode === "list"
+              ? "grid-cols-1 max-w-3xl mx-auto"
+              : "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+            isPending ? "opacity-50 scale-[0.99]" : "opacity-100 scale-100"
           )}
         >
           {data.length === 0 ? (
@@ -91,62 +119,97 @@ const NotesList = () => {
               />
             </div>
           ) : (
-            data.map((note) => (
+            sortedData.map((note) => (
               <motion.div
                 key={note.id}
                 layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className={cn(
-                  "group relative flex flex-col justify-between rounded-xl transition-all hover:border-zinc-300 hover:shadow-md"
-                )}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="group relative"
               >
                 <Card
                   className={cn(
-                    "cursor-pointer hover:shadow-lg transition-shadow h-[200px] flex flex-col justify-between relative"
+                    "cursor-pointer h-[240px] flex flex-col justify-between relative overflow-hidden transition-all duration-300",
+                    "border-zinc-200 dark:border-zinc-800",
+                    "hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700 hover:-translate-y-1",
+                    "bg-white dark:bg-zinc-900/50"
                   )}
                 >
+                  {/* Template || Note Badge */}
+                  <div className="absolute top-0 left-0 p-3 z-10">
+                    <Badge
+                      variant="secondary"
+                      className="h-6 px-2 text-[10px] font-medium bg-zinc-100/80 dark:bg-zinc-800/80 border-0"
+                    >
+                      {note.type === "TEMPLATE" ? (
+                        <>
+                          <Sparkles className="h-3 w-3 mr-1 text-green-500" />
+                          <span className="text-green-600 dark:text-green-400">
+                            Template
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="h-3 w-3 mr-1 text-blue-500" />
+                          <span className="text-blue-600 dark:text-blue-400">
+                            Note
+                          </span>
+                        </>
+                      )}
+                    </Badge>
+                  </div>
+
                   {note.isPinned && (
-                    <Pin className="h-4 w-4 text-orange-500 fill-orange-500/20 transform -rotate-45 absolute top-6 right-5" />
+                    <div className="absolute top-0 right-0 p-3 z-10">
+                      <Pin className="h-4 w-4 text-orange-500 fill-orange-500/20 transform rotate-45" />
+                    </div>
                   )}
+
                   <NoteToolbox noteId={note.id} />
-                  <CardHeader>
-                    <CardTitle className="line-clamp-1">
-                      {note.title || "Untitled Note"}
+
+                  <CardHeader className="p-5 pb-2">
+                    <CardTitle className="line-clamp-1 font-serif text-lg font-semibold tracking-tight">
+                      {note.title || (
+                        <span className="text-muted-foreground italic">
+                          Untitled Note
+                        </span>
+                      )}
                     </CardTitle>
-                    <CardDescription className="line-clamp-4 mt-2">
-                      {extractTextFromBlockNote(note.content)}
+                    <CardDescription className="line-clamp-3 mt-1 font-serif text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                      {extractTextFromBlockNote(note.content) ||
+                        "No additional text"}
                     </CardDescription>
                   </CardHeader>
-                  <CardFooter className="items-end">
-                    <div className="flex flex-row justify-between w-full">
-                      <div className="flex flex-row gap-3">
-                        {note.tags.map((tag) => (
+
+                  <CardFooter className="p-5 pt-0 items-end mt-auto">
+                    <div className="flex flex-row justify-between items-center w-full pt-4 border-t border-zinc-100 dark:border-zinc-800/50">
+                      <div className="flex flex-row gap-2 overflow-hidden mask-linear-fade">
+                        {note.tags.slice(0, 3).map((tag) => (
                           <Badge
-                            variant="outline"
+                            variant="secondary"
                             key={tag.id}
-                            className="flex flex-row items-center gap-2"
+                            className="flex flex-row items-center gap-1.5 px-2 py-0.5 h-6 text-[10px] font-medium bg-zinc-100/80 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-400 border-0"
                           >
                             <span
                               style={{ backgroundColor: tag.color }}
-                              className={cn(`w-3 h-3 rounded-full`)}
-                            ></span>{" "}
-                            {tag.name.slice(0, 1).toUpperCase() +
-                              tag.name.slice(1)}
+                              className="w-1.5 h-1.5 rounded-full"
+                            ></span>
+                            {tag.name}
                           </Badge>
                         ))}
+                        {note.tags.length > 3 && (
+                          <span className="text-[10px] text-muted-foreground self-center">
+                            +{note.tags.length - 3}
+                          </span>
+                        )}
                       </div>
-                      <div className="flex flex-row items-center gap-2">
-                        <Calendar size={15} color="gray" />
-                        <p className="text-gray-400 text-sm font-medium">
-                          {note.updatedAt.toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </p>
-                      </div>
+                      <p className="text-zinc-400 text-[10px] font-medium whitespace-nowrap ml-2">
+                        {formatDistanceToNow(new Date(note.updatedAt), {
+                          addSuffix: true,
+                        })}
+                      </p>
                     </div>
                   </CardFooter>
                 </Card>

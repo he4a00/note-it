@@ -26,7 +26,6 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { useSuspenseTags } from "../services/tags/hooks/useTags";
 import { cn } from "@/lib/utils";
 import { useSuspenseFolders } from "@/services/folders/hooks/useFolders";
@@ -42,8 +41,8 @@ const items = [
     icon: Home,
   },
   {
-    title: "Favorites",
-    url: "/dashboard/favorites",
+    title: "Templates",
+    url: "/dashboard/templates",
     icon: Star,
   },
   {

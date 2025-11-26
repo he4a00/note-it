@@ -30,8 +30,8 @@ interface NotesFiltersProps {
   setFolderId: (folderId: string) => void;
   searchQuery: string;
   setSearchQuery: (searchQuery: string) => void;
-  isPinned: boolean;
-  setIsPinned: (isPinned: boolean) => void;
+  isPinned: boolean | undefined;
+  setIsPinned: (isPinned: boolean | undefined) => void;
 }
 
 const NotesFilter = ({
@@ -69,8 +69,8 @@ const NotesFilter = ({
           aria-label="Toggle pinned"
           size="sm"
           className="h-8 cursor-pointer gap-2 px-2 data-[state=on]:bg-amber-100 data-[state=on]:text-amber-700 dark:data-[state=on]:bg-amber-900/30 dark:data-[state=on]:text-amber-400 lg:px-3"
-          pressed={isPinned}
-          onPressedChange={setIsPinned}
+          pressed={isPinned === true}
+          onPressedChange={(pressed) => setIsPinned(pressed ? true : undefined)}
         >
           <Pin className="h-4 w-4" />
         </Toggle>
