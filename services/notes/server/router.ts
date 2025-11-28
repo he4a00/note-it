@@ -64,12 +64,14 @@ export const notesRouter = createTRPCRouter({
           tagId: z.string().optional(),
           isPinned: z.boolean().optional(),
           isArchived: z.boolean().optional(),
+          isFavorite: z.boolean().optional(),
           search: z.string().optional(),
         })
         .optional()
     )
     .query(async ({ ctx, input }) => {
-      const { folderId, tagId, isPinned, isArchived, search } = input || {};
+      const { folderId, tagId, isPinned, isArchived, isFavorite, search } =
+        input || {};
 
       return await prisma.note.findMany({
         where: {
@@ -77,6 +79,7 @@ export const notesRouter = createTRPCRouter({
           folderId: folderId,
           isPinned: isPinned,
           isArchived: isArchived,
+          isFavorite: isFavorite,
           tags: tagId ? { some: { id: tagId } } : undefined,
           // type: "NOTE",
 
@@ -164,6 +167,30 @@ export const notesRouter = createTRPCRouter({
       });
     }),
 
+  toggleFavorite: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const note = await prisma.note.findUniqueOrThrow({
+        where: {
+          id: input.id,
+          userId: ctx.auth.user.id,
+        },
+        select: {
+          isFavorite: true,
+        },
+      });
+
+      return await prisma.note.update({
+        where: {
+          id: input.id,
+          userId: ctx.auth.user.id,
+        },
+        data: {
+          isFavorite: !note.isFavorite,
+        },
+      });
+    }),
+
   getAllTemplates: protectedProcedure
     .input(
       z
@@ -172,18 +199,21 @@ export const notesRouter = createTRPCRouter({
           tagId: z.string().optional(),
           isPinned: z.boolean().optional(),
           isArchived: z.boolean().optional(),
+          isFavorite: z.boolean().optional(),
           search: z.string().optional(),
         })
         .optional()
     )
     .query(async ({ ctx, input }) => {
-      const { folderId, tagId, isPinned, isArchived, search } = input || {};
+      const { folderId, tagId, isPinned, isArchived, isFavorite, search } =
+        input || {};
 
       return await prisma.note.findMany({
         where: {
           folderId: folderId,
           isPinned: isPinned,
           isArchived: isArchived,
+          isFavorite: isFavorite,
           tags: tagId ? { some: { id: tagId } } : undefined,
           type: "TEMPLATE",
           userId: {

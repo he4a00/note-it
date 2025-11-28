@@ -132,3 +132,26 @@ export const useTogglePinNote = () => {
     })
   );
 };
+
+export const useToggleFavoriteNote = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.notes.toggleFavorite.mutationOptions({
+      onSuccess: (data) => {
+        toast.success("Note favorited successfully");
+        queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
+        queryClient.invalidateQueries(
+          trpc.notes.getAllTemplates.queryOptions()
+        );
+        queryClient.invalidateQueries(
+          trpc.notes.getOne.queryOptions({ id: data.id })
+        );
+      },
+      onError: (error) => {
+        console.log(error);
+      },
+    })
+  );
+};
