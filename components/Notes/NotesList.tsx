@@ -11,7 +11,7 @@ import {
 import { extractTextFromBlockNote } from "@/lib/utils/extractTextFromBlockNote";
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
-import { Calendar, Pin, FileText, Sparkles } from "lucide-react";
+import { Calendar, Pin, FileText, Sparkles, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import NoteToolbox from "./NoteToolbox";
 import { Suspense, useState, useTransition } from "react";
@@ -26,6 +26,7 @@ const NotesList = () => {
   const [folderId, setFolderId] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isPinned, setIsPinned] = useState<boolean | undefined>(undefined);
+  const [isFavorite, setIsFavorite] = useState<boolean | undefined>(undefined);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [isPending, startTransition] = useTransition();
 
@@ -33,7 +34,8 @@ const NotesList = () => {
     tagId,
     // folderId,
     search: debouncedSearchQuery,
-    isPinned: isPinned === true ? true : undefined, // Only filter when explicitly true
+    isPinned: isPinned === true ? true : undefined,
+    isFavorite: isFavorite === true ? true : undefined,
   });
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
@@ -61,6 +63,11 @@ const NotesList = () => {
       setIsPinned(isPinned);
     });
   };
+  const handleSetIsFavorite = (isFavorite: boolean | undefined) => {
+    startTransition(() => {
+      setIsFavorite(isFavorite);
+    });
+  };
 
   if (isLoading) return <div>Loading...</div>;
 
@@ -85,6 +92,8 @@ const NotesList = () => {
             setSearchQuery={setSearchQuery}
             isPinned={isPinned}
             setIsPinned={handleSetIsPinned}
+            isFavorite={isFavorite}
+            setIsFavorite={handleSetIsFavorite}
           />
           <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
         </div>
@@ -164,6 +173,16 @@ const NotesList = () => {
                   {note.isPinned && (
                     <div className="absolute top-0 right-0 p-3 z-10">
                       <Pin className="h-4 w-4 text-orange-500 fill-orange-500/20 transform rotate-45" />
+                    </div>
+                  )}
+                  {note.isFavorite && (
+                    <div
+                      className={cn(
+                        "absolute top-0 p-3 z-10",
+                        note.isPinned ? "right-6" : "right-0"
+                      )}
+                    >
+                      <Heart className="h-4 w-4 text-red-500 fill-red-500" />
                     </div>
                   )}
 

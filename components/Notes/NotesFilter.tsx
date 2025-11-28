@@ -7,6 +7,7 @@ import {
   Tag,
   Folder,
   Pin,
+  Heart,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,8 @@ interface NotesFiltersProps {
   setSearchQuery: (searchQuery: string) => void;
   isPinned: boolean | undefined;
   setIsPinned: (isPinned: boolean | undefined) => void;
+  isFavorite: boolean | undefined;
+  setIsFavorite: (isFavorite: boolean | undefined) => void;
 }
 
 const NotesFilter = ({
@@ -43,6 +46,8 @@ const NotesFilter = ({
   setSearchQuery,
   isPinned,
   setIsPinned,
+  isFavorite,
+  setIsFavorite,
 }: NotesFiltersProps) => {
   const tags = useSuspenseTags();
   const folders = useSuspenseFolders();
@@ -73,6 +78,17 @@ const NotesFilter = ({
           onPressedChange={(pressed) => setIsPinned(pressed ? true : undefined)}
         >
           <Pin className="h-4 w-4" />
+        </Toggle>
+        <Toggle
+          aria-label="Toggle pinned"
+          size="sm"
+          className="h-8 cursor-pointer gap-2 px-2 data-[state=on]:bg-red-200 data-[state=on]:text-amber-700 dark:data-[state=on]:bg-amber-900/30 dark:data-[state=on]:text-amber-400 lg:px-3"
+          pressed={isFavorite === true}
+          onPressedChange={(pressed) =>
+            setIsFavorite(pressed ? true : undefined)
+          }
+        >
+          <Heart className="h-4 w-4" />
         </Toggle>
 
         <DropdownMenu>
