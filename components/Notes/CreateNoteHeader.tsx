@@ -28,6 +28,8 @@ import {
 } from "@/services/folders/hooks/useFolders";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
+import NoteMenu from "../shared/Menu/note-menu";
+import { BlockNoteEditor } from "@blocknote/core";
 
 interface CreateNoteHeaderProps {
   onTagsChange?: (tags: Tag[]) => void;
@@ -40,6 +42,7 @@ interface CreateNoteHeaderProps {
   setNoteType: (noteType: "NOTE" | "TEMPLATE") => void;
   title?: string;
   onTitleChange?: (title: string) => void;
+  editor?: BlockNoteEditor | null;
 }
 
 const CreateNoteHeader = ({
@@ -53,6 +56,7 @@ const CreateNoteHeader = ({
   setNoteType,
   title = "",
   onTitleChange,
+  editor,
 }: CreateNoteHeaderProps) => {
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
   const [folderPopoverOpen, setFolderPopoverOpen] = useState(false);
@@ -169,7 +173,7 @@ const CreateNoteHeader = ({
       </div>
 
       {/* Metadata Section */}
-      <div className="flex flex-wrap items-center gap-3 pb-4 border-b border-border/30">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border/30">
         {/* Tags and Folder Section */}
         <div className="flex items-center gap-4">
           {/* Tags Section */}
@@ -426,6 +430,7 @@ const CreateNoteHeader = ({
             </RadioGroup>
           </div>
         </div>
+        <NoteMenu editor={editor} noteTitle={title} />
       </div>
     </div>
   );

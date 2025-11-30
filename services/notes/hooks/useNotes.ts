@@ -80,8 +80,8 @@ export const useDeleteNote = () => {
           trpc.notes.getAllTemplates.queryOptions()
         );
       },
-      onError: (error) => {
-        console.log(error);
+      onError: () => {
+        toast.error("Note deletion failed");
       },
     })
   );

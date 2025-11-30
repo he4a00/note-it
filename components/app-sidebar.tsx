@@ -1,17 +1,6 @@
 "use client";
 
-import {
-  Calendar,
-  Home,
-  Inbox,
-  Search,
-  Settings,
-  Star,
-  Trash2,
-  Plus,
-  Folder,
-  Tag,
-} from "lucide-react";
+import { Home, Settings, Star, Trash2, Folder } from "lucide-react";
 
 import {
   Sidebar,
@@ -46,16 +35,16 @@ const items = [
     url: "/dashboard/templates",
     icon: Star,
   },
-  {
-    title: "Archived",
-    url: "/dashboard/archived",
-    icon: Trash2,
-  },
-  {
-    title: "Settings",
-    url: "/dashboard/settings",
-    icon: Settings,
-  },
+  // {
+  //   title: "Archived",
+  //   url: "/dashboard/archived",
+  //   icon: Trash2,
+  // },
+  // {
+  //   title: "Settings",
+  //   url: "/dashboard/settings",
+  //   icon: Settings,
+  // },
 ];
 
 export function AppSidebar() {
@@ -66,12 +55,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader>
-        <div className="p-2">
-          <h2 className="text-lg font-semibold tracking-tight px-2">Note It</h2>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="mt-10">
         <SidebarGroup>
           <SidebarGroupLabel>Application</SidebarGroupLabel>
           <SidebarGroupContent>

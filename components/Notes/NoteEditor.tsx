@@ -10,7 +10,7 @@ import { useNote, useUpdateNote } from "@/services/notes/hooks/useNotes";
 import CreateNoteHeader from "./CreateNoteHeader";
 import { Tag } from "@/lib/generated/prisma";
 import { formatDistanceToNow } from "date-fns";
-import { Check, Cloud, Loader2 } from "lucide-react";
+import { Cloud } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Breadcrumb,
@@ -179,9 +179,7 @@ export default function NotesEditor({
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
-
               {/* Save Status Indicator */}
-
               <div className="flex flex-row items-center gap-2">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground">
                   <Cloud className="h-3.5 w-3.5" />
@@ -208,7 +206,6 @@ export default function NotesEditor({
                 )}
               </div>
             </div>
-
             {noteId && (
               <CreateNoteHeader
                 title={title}
@@ -219,6 +216,7 @@ export default function NotesEditor({
                 setFolderId={handleFolderChange}
                 noteType={noteType}
                 setNoteType={handleNoteTypeChange}
+                editor={editor}
               />
             )}
           </div>
