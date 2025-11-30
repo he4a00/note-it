@@ -18,7 +18,7 @@ const NoteToolbox = ({ noteId }: { noteId: string }) => {
   return (
     <div
       className={cn(
-        "absolute top-1 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 flex items-center gap-1 bg-white/80 backdrop-blur-md p-1 rounded-full border border-black/5 shadow-sm dark:bg-zinc-900/80 dark:border-white/10",
+        "absolute top-1 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 flex items-center gap-1 bg-white/80 backdrop-blur-md p-1 rounded-full border border-black/5 shadow-sm dark:bg-zinc-900/80 dark:border-white/10",
         noteData?.isPinned || (noteData?.isFavorite && "right-10"),
         noteData?.isPinned && noteData?.isFavorite && "right-15"
       )}

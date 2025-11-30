@@ -22,8 +22,24 @@ model User {
   tags          Tag[]
   notes         Note[]
 
+  notifications Notification[]
+
   @@unique([email])
   @@map("user")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String
+  message   String
+  isRead    Boolean  @default(false)
+  data      Json?
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification")
 }
 
 model Session {

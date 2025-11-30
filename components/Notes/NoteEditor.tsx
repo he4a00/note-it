@@ -20,6 +20,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import SaveNoteButton from "./SaveNoteButton";
 
 interface NotesEditorProps {
   onEditorReady?: (editor: BlockNoteEditor) => void;
@@ -37,17 +38,13 @@ export default function NotesEditor({
   noteId,
 }: NotesEditorProps) {
   const editor = useCreateBlockNote();
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [internalContent, setInternalContent] = useState<string>("");
-  const [lastSavedContent, setLastSavedContent] = useState<string>("");
   const [title, setTitle] = useState<string>("");
   const [tagsId, setTagsId] = useState<string[]>([]);
   const [folderId, setFolderId] = useState<string>("");
   const [noteType, setNoteType] = useState<"NOTE" | "TEMPLATE">("NOTE");
-  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [internalContent, setInternalContent] = useState<string>("");
   const { theme } = useTheme();
   const { data: noteData, isLoading: isLoadingNote } = useNote(noteId);
-  const updateNoteMutation = useUpdateNote();
   const currentContent = noteContent ?? internalContent;
 
   useEffect(() => {
@@ -55,53 +52,6 @@ export default function NotesEditor({
       onEditorReady(editor);
     }
   }, [editor, onEditorReady]);
-
-  const saveNotes = useCallback(
-    async (
-      content: string,
-      currentTagsId: string[],
-      currentFolderId: string,
-      currentTitle: string
-    ) => {
-      if (
-        !noteId ||
-        (content === lastSavedContent &&
-          JSON.stringify(currentTagsId) ===
-            JSON.stringify(noteData?.tags?.map((t: Tag) => t.id) || []) &&
-          currentFolderId === noteData?.folderId &&
-          currentTitle === noteData?.title) ||
-        !content.trim() ||
-        content === "[]"
-      )
-        return;
-
-      setSaveStatus("saving");
-      updateNoteMutation.mutate(
-        {
-          id: noteId,
-          content,
-          title: currentTitle || "Untitled",
-          tagIds: currentTagsId,
-          folderId: currentFolderId || null,
-        },
-        {
-          onSuccess: () => {
-            setLastSavedContent(content);
-            setSaveStatus("saved");
-
-            setTimeout(() => {
-              setSaveStatus("idle");
-            }, 2000);
-          },
-          onError: (error) => {
-            console.error("Failed to save notes:", error);
-            setSaveStatus("error");
-          },
-        }
-      );
-    },
-    [lastSavedContent, updateNoteMutation, noteId, noteData]
-  );
 
   useEditorChange(async (editor) => {
     const blocksJson = JSON.stringify(editor.document);
@@ -118,7 +68,7 @@ export default function NotesEditor({
         if (noteData.content) {
           const blocks = JSON.parse(noteData.content);
           editor.replaceBlocks(editor.document, blocks);
-          setLastSavedContent(noteData.content);
+          // setLastSavedContent(noteData.content);
           if (!noteContent) {
             setInternalContent(noteData.content);
           }
@@ -137,65 +87,16 @@ export default function NotesEditor({
     loadInitialData();
   }, [editor, noteData, noteContent]);
 
-  useEffect(() => {
-    if (currentContent && currentContent !== lastSavedContent) {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      saveTimeoutRef.current = setTimeout(() => {
-        saveNotes(currentContent, tagsId, folderId, title);
-      }, 2500);
-    }
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-    };
-  }, [currentContent, saveNotes, lastSavedContent, tagsId, folderId, title]);
-
-  const handleBlur = useCallback(() => {
-    if (currentContent && currentContent !== lastSavedContent) {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-      saveNotes(currentContent, tagsId, folderId, title);
-    }
-  }, [currentContent, lastSavedContent, saveNotes, tagsId, folderId, title]);
-
   const handleTagsChange = (newTagsId: string[]) => {
     setTagsId(newTagsId);
-    // Immediate save for tags
-    updateNoteMutation.mutate({
-      id: noteId!,
-      tagIds: newTagsId,
-      folderId: folderId || null,
-      content: currentContent,
-    });
   };
 
   const handleFolderChange = (newFolderId: string) => {
     setFolderId(newFolderId);
-    // Immediate save for folder
-    updateNoteMutation.mutate({
-      id: noteId!,
-      folderId: newFolderId || null,
-      tagIds: tagsId,
-      content: currentContent,
-    });
   };
 
   const handleNoteTypeChange = (newNoteType: "NOTE" | "TEMPLATE") => {
     setNoteType(newNoteType);
-    // Immediate save for note type
-    updateNoteMutation.mutate({
-      id: noteId!,
-      type: newNoteType,
-      tagIds: tagsId,
-      folderId: folderId || null,
-      content: currentContent,
-    });
   };
 
   const handleTitleChange = (newTitle: string) => {
@@ -280,39 +181,32 @@ export default function NotesEditor({
               </Breadcrumb>
 
               {/* Save Status Indicator */}
-              {noteId && (
-                <div className="flex items-center justify-end min-w-[100px] duration-500">
-                  {updateNoteMutation.isPending || saveStatus === "saving" ? (
-                    <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground duration-300">
-                      <Loader2 className="animate-spin h-3.5 w-3.5" />
-                      <span>Saving...</span>
-                    </div>
-                  ) : saveStatus === "saved" ? (
-                    <div className="flex items-center gap-2 text-xs font-medium text-green-600 dark:text-green-500 duration-300">
-                      <Check className="h-3.5 w-3.5" />
-                      <span>Saved</span>
-                    </div>
-                  ) : saveStatus === "error" ? (
-                    <div className="flex items-center gap-2 text-xs font-medium text-destructive duration-300">
-                      <span>Error saving</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground">
-                      <Cloud className="h-3.5 w-3.5" />
-                      <span>
-                        {noteData?.updatedAt
-                          ? `Edited ${formatDistanceToNow(
-                              new Date(noteData.updatedAt),
-                              {
-                                addSuffix: true,
-                              }
-                            )}`
-                          : "All changes saved"}
-                      </span>
-                    </div>
-                  )}
+
+              <div className="flex flex-row items-center gap-2">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground">
+                  <Cloud className="h-3.5 w-3.5" />
+                  <span>
+                    {noteData?.updatedAt
+                      ? `Edited ${formatDistanceToNow(
+                          new Date(noteData.updatedAt),
+                          {
+                            addSuffix: true,
+                          }
+                        )}`
+                      : "All changes saved"}
+                  </span>
                 </div>
-              )}
+                {noteId && (
+                  <SaveNoteButton
+                    noteId={noteId}
+                    currentContent={currentContent}
+                    title={title}
+                    tagsId={tagsId}
+                    folderId={folderId}
+                    noteType={noteType}
+                  />
+                )}
+              </div>
             </div>
 
             {noteId && (
@@ -335,7 +229,7 @@ export default function NotesEditor({
               <BlockNoteView
                 editor={editor}
                 theme={theme === "dark" ? bnTheme.dark : bnTheme.light}
-                onBlur={handleBlur}
+                // onBlur={handleBlur}
                 className={cn(
                   "h-full min-h-full",
                   "font-serif text-lg leading-relaxed",

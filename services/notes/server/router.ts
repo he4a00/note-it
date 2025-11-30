@@ -1,4 +1,5 @@
 import prisma from "@/lib/db";
+import { pusherServer } from "@/lib/pusher";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { z } from "zod";
 
@@ -15,7 +16,7 @@ export const notesRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await prisma.note.create({
+      const note = await prisma.note.create({
         data: {
           title: input.title,
           content: input.content,
@@ -39,6 +40,8 @@ export const notesRouter = createTRPCRouter({
           },
         },
       });
+
+      return note;
     }),
 
   getOne: protectedProcedure
@@ -112,7 +115,17 @@ export const notesRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      return await prisma.note.update({
+      const currentNote = await prisma.note.findUnique({
+        where: {
+          id: input.id,
+          userId: ctx.auth.user.id,
+        },
+        select: {
+          type: true,
+        },
+      });
+
+      const updatedNote = await prisma.note.update({
         where: {
           id: input.id,
           userId: ctx.auth.user.id,
@@ -130,6 +143,45 @@ export const notesRouter = createTRPCRouter({
           },
         },
       });
+
+      if (input.type === "TEMPLATE" && currentNote?.type !== "TEMPLATE") {
+        // Fetch all other users
+        const otherUsers = await prisma.user.findMany({
+          where: {
+            id: {
+              not: ctx.auth.user.id,
+            },
+          },
+          select: {
+            id: true,
+          },
+        });
+
+        if (otherUsers.length > 0) {
+          // Create notifications in DB
+          await prisma.notification.createMany({
+            data: otherUsers.map((user) => ({
+              userId: user.id,
+              type: "TEMPLATE_CREATED",
+              message: `New template created: ${updatedNote.title}`,
+              data: {
+                templateId: updatedNote.id,
+                creatorId: ctx.auth.user.id,
+              },
+            })),
+          });
+
+          // Trigger Pusher event for each user
+          for (const user of otherUsers) {
+            await pusherServer.trigger(`user-${user.id}`, "notification", {
+              message: `New template created: ${updatedNote.title}`,
+              type: "TEMPLATE_CREATED",
+            });
+          }
+        }
+      }
+
+      return updatedNote;
     }),
 
   delete: protectedProcedure
