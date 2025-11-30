@@ -11,7 +11,7 @@ import {
 import { extractTextFromBlockNote } from "@/lib/utils/extractTextFromBlockNote";
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
-import { Calendar, Pin, FileText, Sparkles, Heart } from "lucide-react";
+import { Pin, FileText, Sparkles, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import NoteToolbox from "./NoteToolbox";
 import { Suspense, useState, useTransition } from "react";
@@ -37,6 +37,7 @@ const NotesList = () => {
     isPinned: isPinned === true ? true : undefined,
     isFavorite: isFavorite === true ? true : undefined,
   });
+
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // Sort notes to show pinned ones first

@@ -6,7 +6,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, Crown } from "lucide-react";
 import TemplatesDialog from "./TemplatesDialog";
 import { useCreateNote } from "@/services/notes/hooks/useNotes";
 import { useRouter } from "next/navigation";
@@ -67,7 +67,10 @@ const NewDropDown = ({ text }: { text?: string }) => {
                   <FileText className="w-5 h-5 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <div className="font-medium text-base">Use Template...</div>
+                  <div className="flex flex-row items-center justify-between">
+                    <span className="font-medium text-base">Use Template</span>
+                    <Crown className="text-yellow-500" />
+                  </div>
                   <div className="text-sm text-muted-foreground">
                     Begin with a pre-built layout.
                   </div>

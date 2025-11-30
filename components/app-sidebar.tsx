@@ -33,6 +33,7 @@ import { NavUser } from "./nav-user";
 import { authClient } from "@/lib/auth-client";
 import { Skeleton } from "./ui/skeleton";
 import Link from "next/link";
+import { useGetUser } from "@/services/user/hooks/useUser";
 
 const items = [
   {
@@ -61,6 +62,7 @@ export function AppSidebar() {
   const tags = useSuspenseTags();
   const folders = useSuspenseFolders();
   const { data: session } = authClient.useSession();
+  const { data: loggedUser } = useGetUser(session?.user?.id || "");
 
   return (
     <Sidebar>
@@ -166,13 +168,14 @@ export function AppSidebar() {
       <SidebarFooter>
         <NavUser
           user={
-            session?.user
+            loggedUser?.name
               ? {
-                  name: session.user.name,
-                  email: session.user.email,
-                  image: session.user.image ?? "",
+                  name: loggedUser.name,
+                  email: loggedUser.email,
+                  image: loggedUser.image ?? "",
+                  id: loggedUser.id,
                 }
-              : { name: "", email: "", image: "" }
+              : { name: "", email: "", image: "", id: "" }
           }
         />
       </SidebarFooter>

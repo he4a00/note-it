@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import AccountDetails from "./account-popup";
+import { useState } from "react";
 
 export function NavUser({
   user,
@@ -35,10 +37,12 @@ export function NavUser({
     name: string;
     email: string;
     image: string;
+    id: string;
   };
 }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
 
   return (
     <SidebarMenu>
@@ -87,7 +91,7 @@ export function NavUser({
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => setIsAccountOpen(true)}>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
@@ -114,6 +118,11 @@ export function NavUser({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        <AccountDetails
+          open={isAccountOpen}
+          onOpenChange={setIsAccountOpen}
+          user={user}
+        />
       </SidebarMenuItem>
     </SidebarMenu>
   );
