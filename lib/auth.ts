@@ -6,6 +6,11 @@ import { polarClient } from "./polar";
 
 const prisma = new PrismaClient();
 export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  trustedOrigins: [
+    process.env.BETTER_AUTH_URL || "http://localhost:3000",
+    "http://localhost:3000",
+  ],
   database: prismaAdapter(prisma, {
     provider: "postgresql",
   }),
@@ -28,7 +33,7 @@ export const auth = betterAuth({
           successUrl: process.env.POLAR_SUCCESS_URL,
           authenticatedUsersOnly: true,
         }),
-        portal()
+        portal(),
       ],
     }),
   ],
