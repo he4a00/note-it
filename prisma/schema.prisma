@@ -22,7 +22,11 @@ model User {
   tags          Tag[]
   notes         Note[]
 
-  notifications Notification[]
+  notifications       Notification[]
+  organizations       Organization[]
+  organizationMembers OrganizationMember[]
+  teamMembers         TeamMember[]
+  activities          Activity[]
 
   @@unique([email])
   @@map("user")
@@ -92,23 +96,67 @@ enum NoteType {
   TEMPLATE
 }
 
+enum Visibility {
+  PRIVATE
+  ORG
+  TEAM
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  action    String
+  createdAt DateTime @default(now())
+
+  // Who did this action?
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Where did it happen ?
+
+  orgId String
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  // Who was affected ?
+
+  entityId   String?
+  entityType String?
+
+  metadata Json?
+}
+
 model Note {
-  id         String    @id @default(cuid())
-  type       NoteType  @default(NOTE)
+  id         String        @id @default(cuid())
+  type       NoteType      @default(NOTE)
   title      String
   content    String
-  isPinned   Boolean   @default(false)
-  isArchived Boolean   @default(false)
-  isFavorite Boolean   @default(false)
+  isPinned   Boolean       @default(false)
+  isArchived Boolean       @default(false)
+  isFavorite Boolean       @default(false)
   deletedAt  DateTime?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  folder     Folder?   @relation(fields: [folderId], references: [id])
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  folder     Folder?       @relation(fields: [folderId], references: [id])
   folderId   String?
   tags       Tag[]
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     String
+  org        Organization? @relation(fields: [orgId], references: [id])
+  orgId      String?
+  team       Team?         @relation(fields: [teamId], references: [id])
+  teamId     String?
+  visibility Visibility    @default(PRIVATE)
 
+  @@index([userId])
+  @@index([orgId])
+  @@index([teamId])
+  @@index([visibility])
   @@map("note")
 }
 
@@ -135,4 +183,70 @@ model Tag {
   userId    String
 
   @@map("tag")
+}
+
+// Organization Models 
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String?
+  image     String?
+  ownerId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  owner      User                 @relation(fields: [ownerId], references: [id])
+  members    OrganizationMember[]
+  teams      Team[]
+  notes      Note[]
+  activities Activity[]
+
+  @@index([ownerId])
+}
+
+model OrganizationMember {
+  id       String   @id @default(cuid())
+  orgId    String
+  userId   String
+  role     OrgRole
+  joinedAt DateTime @default(now())
+
+  org  Organization @relation(fields: [orgId], references: [id])
+  user User         @relation(fields: [userId], references: [id])
+
+  @@unique([orgId, userId])
+  @@index([userId])
+  @@index([orgId, role])
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  orgId       String
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  org     Organization @relation(fields: [orgId], references: [id])
+  members TeamMember[]
+  notes   Note[] // notes scoped to team (optional)
+
+  @@index([orgId])
+}
+
+model TeamMember {
+  id       String   @id @default(cuid())
+  teamId   String
+  userId   String
+  role     String // e.g. "LEAD", "DEV", "DESIGNER" — free text
+  joinedAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([teamId, userId])
+  @@index([userId])
+  @@index([teamId, role])
 }

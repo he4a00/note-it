@@ -23,6 +23,8 @@ import { authClient } from "@/lib/auth-client";
 import { Skeleton } from "./ui/skeleton";
 import Link from "next/link";
 import { useGetUser } from "@/services/user/hooks/useUser";
+import { useGetMyOrgs } from "@/services/organizations/hooks/useOrganization";
+import Image from "next/image";
 
 const items = [
   {
@@ -52,6 +54,7 @@ export function AppSidebar() {
   const folders = useSuspenseFolders();
   const { data: session } = authClient.useSession();
   const { data: loggedUser } = useGetUser(session?.user?.id || "");
+  const myOrgs = useGetMyOrgs();
 
   return (
     <Sidebar>
@@ -70,6 +73,48 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        {/* Organizations */}
+        <SidebarGroup>
+          <SidebarGroupLabel>My Organizations</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {myOrgs.isLoading ? (
+                <>
+                  {[...Array(3)].map((_, i) => (
+                    <SidebarMenuItem key={i}>
+                      <SidebarMenuButton disabled>
+                        <Skeleton className="h-4 w-4 rounded" />
+                        <Skeleton className="h-4 w-24" />
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </>
+              ) : (
+                myOrgs.data?.map((org) => (
+                  <SidebarMenuItem key={org.id} className="ml-2">
+                    <SidebarMenuButton asChild>
+                      <div className="flex flex-row items-center gap-2">
+                        <Image
+                          src={org.image || ""}
+                          alt={org.name}
+                          width={30}
+                          height={30}
+                          className="rounded-full"
+                        />
+                        <Link href={`/dashboard/organization/${org.id}`}>
+                          <span className="text-sm">
+                            {org.name.slice(0, 1).toUpperCase() +
+                              org.name.slice(1)}{" "}
+                          </span>
+                        </Link>
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -29,6 +29,15 @@ interface AccountDetailsProps {
   };
 }
 
+export const getInitials = (name: string) => {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
+
 const AccountDetails = ({ open, onOpenChange, user }: AccountDetailsProps) => {
   const { data: loggedUser } = useGetUser(user?.id || "");
   const updateUserMutation = useUpdateUser();
@@ -60,15 +69,6 @@ const AccountDetails = ({ open, onOpenChange, user }: AccountDetailsProps) => {
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
-  };
-
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   const handleUserUpdate = () => {

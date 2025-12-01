@@ -13,6 +13,8 @@ export const notesRouter = createTRPCRouter({
         type: z.enum(["NOTE", "TEMPLATE"]),
         tagIds: z.array(z.string()).optional(),
         userId: z.string().optional(),
+        orgId: z.string().nullable().optional(),
+        visibility: z.enum(["PRIVATE", "ORG", "TEAM"]).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -38,6 +40,14 @@ export const notesRouter = createTRPCRouter({
               id: ctx.auth.user.id || input.userId,
             },
           },
+          visibility: input.visibility,
+          ...(input.orgId && {
+            org: {
+              connect: {
+                id: input.orgId,
+              },
+            },
+          }),
         },
       });
 
@@ -55,6 +65,7 @@ export const notesRouter = createTRPCRouter({
         include: {
           folder: true,
           tags: true,
+          org: true,
         },
       });
     }),
@@ -99,6 +110,7 @@ export const notesRouter = createTRPCRouter({
         include: {
           folder: true,
           tags: true,
+          org: true,
         },
       });
     }),
@@ -112,6 +124,8 @@ export const notesRouter = createTRPCRouter({
         folderId: z.string().nullable().optional(),
         tagIds: z.array(z.string()).optional(),
         type: z.enum(["NOTE", "TEMPLATE"]).optional(),
+        visibility: z.enum(["PRIVATE", "ORG", "TEAM"]).optional(),
+        orgId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -141,6 +155,8 @@ export const notesRouter = createTRPCRouter({
                 id: tagId,
               })) || [],
           },
+          visibility: input.visibility,
+          orgId: input.orgId,
         },
       });
 
