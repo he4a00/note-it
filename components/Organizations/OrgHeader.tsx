@@ -5,6 +5,8 @@ import { Button } from "../ui/button";
 import { Briefcase, Calendar, Trash, Users } from "lucide-react";
 import { useDeleteOrganization } from "@/services/organizations/hooks/useOrganization";
 import { useRouter } from "next/navigation";
+import InviteMemberDialog from "./InviteMemberDialog";
+import CreateTeamDialog from "./CreateTeamDialog";
 
 const OrgHeader = ({
   orgId,
@@ -35,7 +37,7 @@ const OrgHeader = ({
   };
   return (
     <div className="flex flex-col">
-      <div className="flex flex-row items-center justify-between">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-0">
         {/* Title and image */}
         <div className="flex flex-row items-center gap-2">
           <Image
@@ -46,20 +48,18 @@ const OrgHeader = ({
             className="rounded-2xl"
           />
           <div className="flex flex-col gap-y-1">
-            <h1 className="text-4xl font-bold">{orgName}</h1>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
+              {orgName}
+            </h1>
             <p className="text-gray-500 font-medium text-md">
               noteit.com/{orgSlug}
             </p>
           </div>
         </div>
         {/* CTA Buttons */}
-        <div className="flex flex-row gap-4">
-          <Button size="lg" variant="outline" className="">
-            <Users /> Create Team
-          </Button>
-          <Button size="lg" className="">
-            <Users /> Invite Members
-          </Button>
+        <div className="flex flex-row gap-2 sm:gap-4 flex-wrap w-full md:w-auto">
+          <CreateTeamDialog orgId={orgId} />
+          <InviteMemberDialog orgId={orgId} />
           <Button
             onClick={handleDelete}
             disabled={deleteOrgMutation.isPending}
@@ -72,7 +72,7 @@ const OrgHeader = ({
         </div>
       </div>
       {/* Statistcis */}
-      <div className="flex flex-row gap-6 mt-5 ml-2">
+      <div className="flex flex-row flex-wrap gap-4 sm:gap-6 mt-5 ml-0 sm:ml-2">
         <div className="flex flex-row items-center gap-2">
           <Users size={14} color="gray" />
           <p className="text-gray-500 text-sm">{membersCount}</p>

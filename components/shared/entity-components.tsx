@@ -58,3 +58,39 @@ export function EmptyComponent({
     </Empty>
   );
 }
+
+interface EntityPaginationProps {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+  disabled?: boolean;
+}
+
+export const EntityPagination = ({
+  page,
+  totalPages,
+  onPageChange,
+  disabled,
+}: EntityPaginationProps) => {
+  return (
+    <div className="flex items-center justify-between">
+      <Button
+        variant="outline"
+        onClick={() => onPageChange(page - 1)}
+        disabled={disabled || page === 1}
+      >
+        Previous
+      </Button>
+      <span className="text-muted-foreground">
+        Page {page} of {totalPages}
+      </span>
+      <Button
+        variant="outline"
+        onClick={() => onPageChange(page + 1)}
+        disabled={disabled || page === totalPages}
+      >
+        Next
+      </Button>
+    </div>
+  );
+};

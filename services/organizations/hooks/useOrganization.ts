@@ -2,6 +2,7 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { useOrganizationsParams } from "./use-organizations-params";
 
 export const useCreateOrganization = () => {
   const trpc = useTRPC();
@@ -50,5 +51,57 @@ export const useDeleteOrganization = () => {
 
 export const useGetAllActivities = (orgId: string) => {
   const trpc = useTRPC();
-  return useQuery(trpc.organization.getAllActivities.queryOptions({ orgId }));
+  const [params] = useOrganizationsParams();
+  return useQuery(
+    trpc.organization.getAllActivities.queryOptions({ orgId, ...params })
+  );
+};
+
+export const useInviteMemberToOrg = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  return useMutation(
+    trpc.organization.addMemberToOrg.mutationOptions({
+      onSuccess: (data) => {
+        toast.success("Member added successfully");
+        queryClient.invalidateQueries(
+          trpc.organization.getAllActivities.queryOptions({
+            orgId: data.orgId,
+          })
+        );
+        queryClient.invalidateQueries(
+          trpc.organization.getOrgById.queryOptions({
+            id: data.orgId,
+          })
+        );
+      },
+      onError: () => {
+        toast.error("Failed to invite member");
+      },
+    })
+  );
+};
+export const useRemoveMemberFromOrg = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  return useMutation(
+    trpc.organization.removeMemeberFromOrg.mutationOptions({
+      onSuccess: (data) => {
+        toast.success("Member removed successfully");
+        queryClient.invalidateQueries(
+          trpc.organization.getAllActivities.queryOptions({
+            orgId: data.orgId,
+          })
+        );
+        queryClient.invalidateQueries(
+          trpc.organization.getOrgById.queryOptions({
+            id: data.orgId,
+          })
+        );
+      },
+      onError: () => {
+        toast.error("Failed to remove member");
+      },
+    })
+  );
 };

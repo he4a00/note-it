@@ -32,20 +32,6 @@ model User {
   @@map("user")
 }
 
-model Notification {
-  id        String   @id @default(cuid())
-  type      String
-  message   String
-  isRead    Boolean  @default(false)
-  data      Json?
-  createdAt DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("notification")
-}
-
 model Session {
   id        String   @id
   expiresAt DateTime
@@ -106,6 +92,20 @@ enum OrgRole {
   OWNER
   ADMIN
   MEMBER
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String
+  message   String
+  isRead    Boolean  @default(false)
+  data      Json?
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification")
 }
 
 model Activity {
@@ -231,7 +231,7 @@ model Team {
 
   org     Organization @relation(fields: [orgId], references: [id])
   members TeamMember[]
-  notes   Note[] // notes scoped to team (optional)
+  notes   Note[] // notes scoped to team 
 
   @@index([orgId])
 }
@@ -240,7 +240,7 @@ model TeamMember {
   id       String   @id @default(cuid())
   teamId   String
   userId   String
-  role     String // e.g. "LEAD", "DEV", "DESIGNER" — free text
+  role     String // "LEAD", "DEV", "DESIGNER"
   joinedAt DateTime @default(now())
 
   team Team @relation(fields: [teamId], references: [id])

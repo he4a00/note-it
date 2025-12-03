@@ -5,6 +5,7 @@ import { foldersRouter } from "@/services/folders/server/router";
 import { notificationsRouter } from "@/services/notifications/server/router";
 import { userRouter } from "@/services/user/server/router";
 import { organizationRouter } from "@/services/organizations/server/router";
+import { teamsRouter } from "@/services/teams/service/router";
 
 export const appRouter = createTRPCRouter({
   notes: notesRouter,
@@ -13,6 +14,7 @@ export const appRouter = createTRPCRouter({
   notifications: notificationsRouter,
   user: userRouter,
   organization: organizationRouter,
+  teams: teamsRouter,
 });
 // export type definition of API
 export type AppRouter = typeof appRouter;
