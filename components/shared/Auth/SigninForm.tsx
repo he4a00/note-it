@@ -48,7 +48,7 @@ export function SigninForm({
       },
       {
         onSuccess: () => {
-          router.push("/");
+          router.push("/dashboard");
         },
         onError: (ctx) => {
           toast.error(ctx.error.message);

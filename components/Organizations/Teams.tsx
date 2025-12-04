@@ -1,14 +1,21 @@
 import { Group, Users } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
+import ManageTeam from "./ManageTeam";
 
 interface TeamsProps {
   teamName: string;
   teamDescription: string;
   teamCount: number;
+  teamId: string;
 }
 
-const Teams = ({ teamName, teamDescription, teamCount }: TeamsProps) => {
+const Teams = ({
+  teamName,
+  teamDescription,
+  teamCount,
+  teamId,
+}: TeamsProps) => {
   return (
     <div className="flex flex-col gap-5 bg-card rounded-xl border border-border p-6 shadow-sm">
       <div className="flex flex-col gap-3">
@@ -28,9 +35,7 @@ const Teams = ({ teamName, teamDescription, teamCount }: TeamsProps) => {
           <Badge variant="outline">{teamCount} Members</Badge>
         </div>
       </div>
-      <Button className="w-full bg-secondary border text-black hover:bg-secondary/80 dark:text-white rounded-lg">
-        Manage Team
-      </Button>
+      <ManageTeam teamId={teamId} />
     </div>
   );
 };

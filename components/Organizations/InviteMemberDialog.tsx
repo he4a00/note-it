@@ -28,13 +28,18 @@ import {
 } from "../ui/select";
 import { useInviteMemberToOrg } from "@/services/organizations/hooks/useOrganization";
 
+interface InviteMemberDialogProps {
+  orgId: string;
+  type?: "EDIT" | "CREATE";
+}
+
 const inviteMemberSchema = z.object({
   email: z.email(),
   role: z.enum(["OWNER", "ADMIN", "MEMBER"]),
   orgId: z.string(),
 });
 
-const InviteMemberDialog = ({ orgId }: { orgId: string }) => {
+const InviteMemberDialog = ({ orgId, type }: InviteMemberDialogProps) => {
   const inviteMemeberMutation = useInviteMemberToOrg();
   const form = useForm<z.infer<typeof inviteMemberSchema>>({
     resolver: zodResolver(inviteMemberSchema),

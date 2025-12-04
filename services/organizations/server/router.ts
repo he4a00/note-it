@@ -20,6 +20,12 @@ export const organizationRouter = createTRPCRouter({
           slug: input.slug,
           image: input.image,
           ownerId: ctx.auth.user.id,
+          members: {
+            create: {
+              userId: ctx.auth.user.id,
+              role: "OWNER",
+            },
+          },
         },
       });
 

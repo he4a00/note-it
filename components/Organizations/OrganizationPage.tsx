@@ -18,7 +18,6 @@ const OrganizationPage = ({ orgId }: { orgId: string }) => {
   const activities = useGetAllActivities(orgId);
   const teams = useGetAllTeams({ orgId: orgId });
   const [params, setParams] = useOrganizationsParams();
-  console.log(teams.data);
 
   if (org.isLoading) {
     return (
@@ -63,6 +62,7 @@ const OrganizationPage = ({ orgId }: { orgId: string }) => {
               teamName={team.name || ""}
               teamDescription={team.description || ""}
               teamCount={team.members.length}
+              teamId={team.id}
             />
           ))}
         </div>

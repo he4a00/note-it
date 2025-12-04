@@ -24,3 +24,23 @@ export const useGetAllTeams = ({ orgId }: { orgId: string }) => {
   const trpc = useTRPC();
   return useQuery(trpc.teams.getAll.queryOptions({ orgId: orgId }));
 };
+
+export const useGetTeam = ({ teamId }: { teamId: string }) => {
+  const trpc = useTRPC();
+  return useQuery(trpc.teams.getOne.queryOptions({ id: teamId }));
+};
+
+export const useGetAddTeamMember = ({ teamId }: { teamId: string }) => {
+  const trpc = useTRPC();
+  return useMutation(
+    trpc.teams.addTeamMember.mutationOptions({
+      onSuccess: (data) => {
+        toast.success("Member added successfully");
+        console.log(data);
+      },
+      onError: () => {
+        toast.error("Failed to add member");
+      },
+    })
+  );
+};

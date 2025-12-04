@@ -81,6 +81,7 @@ export const useInviteMemberToOrg = () => {
     })
   );
 };
+
 export const useRemoveMemberFromOrg = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();

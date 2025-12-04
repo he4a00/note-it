@@ -237,7 +237,7 @@ const CreateOrgDialog = ({ open, onOpenChange }: CreateOrgDialogProps) => {
             </Button>
             <Button
               onClick={handleCreate}
-              disabled={!isValid || createOrgMutation.isPending}
+              disabled={!isValid || createOrgMutation.isPending || isUploading}
               className="min-w-[120px]"
             >
               {createOrgMutation.isPending ? (
