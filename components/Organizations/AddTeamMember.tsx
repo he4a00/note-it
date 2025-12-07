@@ -93,7 +93,7 @@ const AddTeamMember = ({ teamId }: AddTeamMemberProps) => {
           <Button
             type="submit"
             form="add-member-team-form"
-            // disabled={inviteMemeberMutation.isPending}
+            disabled={addTeamMemberMutation.isPending}
           >
             Send Invitation
           </Button>

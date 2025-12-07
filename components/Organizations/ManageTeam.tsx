@@ -4,14 +4,14 @@ import { DialogTrigger } from "@radix-ui/react-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Edit2, Plus, Settings, Trash, Users } from "lucide-react";
 import AddTeamMember from "./AddTeamMember";
-import { useGetTeam } from "@/services/teams/hooks/useTeams";
+import { useDeleteTeam, useGetTeam } from "@/services/teams/hooks/useTeams";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
 
 const ManageTeam = ({ teamId }: { teamId: string }) => {
   const team = useGetTeam({ teamId });
   const lead = team.data?.members.find((member) => member.role === "Team Lead");
-  console.log(team.data);
+  const deleteTeamMutation = useDeleteTeam({ id: teamId });
 
   const tabTriggerClass =
     "px-2 sm:px-3 md:px-4 h-12 sm:h-14 md:h-16 rounded-none data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary dark:data-[state=active]:border-primary data-[state=active]:border-t-0 data-[state=active]:border-r-0 data-[state=active]:border-l-0 data-[state=active]:bg-transparent dark:data-[state=active]:bg-transparent flex-shrink-0 min-w-[50px] sm:min-w-[60px] md:min-w-[120px] flex flex-col md:flex-row items-center justify-center gap-0.5 md:gap-1 snap-start";
@@ -47,14 +47,24 @@ const ManageTeam = ({ teamId }: { teamId: string }) => {
           </TabsList>
           <TabsContent value="overview" className="mt-6">
             <div className="p-4 flex flex-col gap-6">
-              <div className="flex flex-col gap-1">
-                <h1 className="text-lg font-medium">Team Details</h1>
-                <p className="text-sm text-muted-foreground">
-                  View and manage your team details.
-                </p>
+              <div className="flex flex-row justify-between">
+                <div className="flex flex-col gap-1">
+                  <h1 className="text-lg font-medium">Team Details</h1>
+                  <p className="text-sm text-muted-foreground">
+                    View and manage your team details.
+                  </p>
+                </div>
+                <Button
+                  variant="destructive"
+                  onClick={() => deleteTeamMutation.mutateAsync({ id: teamId })}
+                  disabled={deleteTeamMutation.isPending}
+                >
+                  <Trash className="mr-2 h-4 w-4" />
+                  Delete Team
+                </Button>
               </div>
-              <Separator />
 
+              <Separator />
               <div className="grid grid-cols-2 gap-6">
                 <div className="flex flex-col gap-1.5">
                   <p className="text-sm text-muted-foreground">Team Name</p>
@@ -73,7 +83,6 @@ const ManageTeam = ({ teamId }: { teamId: string }) => {
                   </div>
                 </div>
               </div>
-
               <div className="flex flex-col gap-1.5">
                 <p className="text-sm text-muted-foreground">Description</p>
                 <p className="font-medium">{team.data?.description}</p>

@@ -20,6 +20,24 @@ export const useCreateTeam = () => {
   );
 };
 
+export const useDeleteTeam = ({ id }: { id: string }) => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  return useMutation(
+    trpc.teams.delete.mutationOptions({
+      onSuccess: (data) => {
+        toast.success("Team deleted successfully");
+        queryClient.invalidateQueries(
+          trpc.teams.getAll.queryOptions({ orgId: data.orgId })
+        );
+      },
+      onError: () => {
+        toast.error("Failed to delete team");
+      },
+    })
+  );
+};
+
 export const useGetAllTeams = ({ orgId }: { orgId: string }) => {
   const trpc = useTRPC();
   return useQuery(trpc.teams.getAll.queryOptions({ orgId: orgId }));
@@ -32,11 +50,15 @@ export const useGetTeam = ({ teamId }: { teamId: string }) => {
 
 export const useGetAddTeamMember = ({ teamId }: { teamId: string }) => {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
   return useMutation(
     trpc.teams.addTeamMember.mutationOptions({
       onSuccess: (data) => {
         toast.success("Member added successfully");
-        console.log(data);
+        queryClient.invalidateQueries(
+          trpc.teams.getAll.queryOptions({ orgId: data.team.orgId })
+        );
       },
       onError: () => {
         toast.error("Failed to add member");

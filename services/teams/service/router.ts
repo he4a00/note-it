@@ -66,7 +66,7 @@ export const teamsRouter = createTRPCRouter({
 
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       return await prisma.team.delete({
         where: {
           id: input.id,
@@ -144,6 +144,9 @@ export const teamsRouter = createTRPCRouter({
           teamId: input.teamId,
           userId: user.id,
           role: input.role,
+        },
+        include: {
+          team: true,
         },
       });
       // push a notification to the added user
