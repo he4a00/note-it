@@ -9,6 +9,7 @@ const SaveNoteButton = ({
   tagsId,
   folderId,
   noteType,
+  orgId,
 }: {
   noteId: string;
   currentContent: string;
@@ -16,6 +17,7 @@ const SaveNoteButton = ({
   tagsId: string[];
   folderId: string;
   noteType: "NOTE" | "TEMPLATE";
+  orgId: string;
 }) => {
   const updateNoteMutation = useUpdateNote();
 
@@ -29,6 +31,7 @@ const SaveNoteButton = ({
           tagIds: tagsId,
           folderId: folderId || null,
           type: noteType,
+          orgId,
         })
       }
       disabled={updateNoteMutation.isPending}

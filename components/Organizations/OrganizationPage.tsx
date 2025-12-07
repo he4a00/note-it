@@ -12,6 +12,7 @@ import OrgMembers from "./OrgMembers";
 import { useGetAllTeams } from "@/services/teams/hooks/useTeams";
 import Teams from "./Teams";
 import { Button } from "../ui/button";
+import OrganizationNotes from "./OrganizationNotes";
 
 const OrganizationPage = ({ orgId }: { orgId: string }) => {
   const org = useGetOrg(orgId);
@@ -26,6 +27,19 @@ const OrganizationPage = ({ orgId }: { orgId: string }) => {
       </div>
     );
   }
+
+  // Transform notes data to match NoteCard props
+  const orgNotes = (org.data?.notes || []).map((note) => ({
+    id: note.id,
+    type: note.type as "NOTE" | "TEMPLATE",
+    title: note.title,
+    content: note.content,
+    isPinned: note.isPinned,
+    isFavorite: note.isFavorite,
+    updatedAt: note.updatedAt,
+    tags: note.tags || [],
+  }));
+
   return (
     <div className="p-4 sm:p-6 md:p-8 lg:p-10">
       <OrgHeader
@@ -36,6 +50,7 @@ const OrganizationPage = ({ orgId }: { orgId: string }) => {
         membersCount={org.data?.members.length || 0}
         createdAt={org.data?.createdAt || new Date()}
       />
+
       <div className="mt-4 sm:mt-6 md:mt-8">
         <RecentActivities
           activities={activities.data?.items || []}
@@ -95,6 +110,10 @@ const OrganizationPage = ({ orgId }: { orgId: string }) => {
             />
           ))}
         </div>
+      </div>
+      {/* Organization Notes Section */}
+      <div className="mt-6 sm:mt-8 md:mt-10">
+        <OrganizationNotes notes={orgNotes} maxDisplay={4} />
       </div>
     </div>
   );

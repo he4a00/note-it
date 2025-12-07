@@ -4,7 +4,7 @@ import { useCreateBlockNote, useEditorChange } from "@blocknote/react";
 import type { BlockNoteEditor } from "@blocknote/core";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useNote, useUpdateNote } from "@/services/notes/hooks/useNotes";
 import CreateNoteHeader from "./CreateNoteHeader";
@@ -29,8 +29,6 @@ interface NotesEditorProps {
   noteId?: string;
 }
 
-type SaveStatus = "idle" | "saving" | "saved" | "error";
-
 export default function NotesEditor({
   onEditorReady,
   noteContent,
@@ -41,6 +39,7 @@ export default function NotesEditor({
   const [title, setTitle] = useState<string>("");
   const [tagsId, setTagsId] = useState<string[]>([]);
   const [folderId, setFolderId] = useState<string>("");
+  const [organizationId, setOrganizationId] = useState<string>("");
   const [noteType, setNoteType] = useState<"NOTE" | "TEMPLATE">("NOTE");
   const [internalContent, setInternalContent] = useState<string>("");
   const { theme } = useTheme();
@@ -95,6 +94,10 @@ export default function NotesEditor({
     setFolderId(newFolderId);
   };
 
+  const handleOrgChange = (newOrgId: string) => {
+    setOrganizationId(newOrgId);
+  };
+
   const handleNoteTypeChange = (newNoteType: "NOTE" | "TEMPLATE") => {
     setNoteType(newNoteType);
   };
@@ -146,9 +149,7 @@ export default function NotesEditor({
     <div className="flex flex-row h-full w-full bg-background min-h-screen">
       {/* Main Editor Area */}
       <div className="flex-1 flex flex-col items-center relative">
-        <div
-          className={cn("w-full max-w-5xl flex flex-col gap-8", noteId && "")}
-        >
+        <div className="w-full max-w-5xl flex flex-col gap-8">
           {/* Header Section */}
           <div className="flex flex-col gap-2 group">
             <div className="flex items-center justify-between h-6">
@@ -202,6 +203,7 @@ export default function NotesEditor({
                     tagsId={tagsId}
                     folderId={folderId}
                     noteType={noteType}
+                    orgId={organizationId}
                   />
                 )}
               </div>
@@ -217,6 +219,8 @@ export default function NotesEditor({
                 noteType={noteType}
                 setNoteType={handleNoteTypeChange}
                 editor={editor}
+                orgId={organizationId}
+                setOrgId={handleOrgChange}
               />
             )}
           </div>

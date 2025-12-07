@@ -18,7 +18,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { FolderIcon, PlusIcon, TagIcon, XIcon } from "lucide-react";
+import { FolderIcon, PlusIcon, XIcon } from "lucide-react";
 import { useSuspenseTags, useCreateTag } from "@/services/tags/hooks/useTags";
 import { Tag } from "@/lib/generated/prisma";
 import TagColorPicker from "./TagColorPicker";
@@ -30,6 +30,7 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
 import NoteMenu from "../shared/Menu/note-menu";
 import { BlockNoteEditor } from "@blocknote/core";
+import ChooseOrganization from "./ChooseOrganization";
 
 interface CreateNoteHeaderProps {
   onTagsChange?: (tags: Tag[]) => void;
@@ -41,6 +42,8 @@ interface CreateNoteHeaderProps {
   noteType: "NOTE" | "TEMPLATE";
   setNoteType: (noteType: "NOTE" | "TEMPLATE") => void;
   title?: string;
+  orgId?: string;
+  setOrgId: (orgId: string) => void;
   onTitleChange?: (title: string) => void;
   editor?: BlockNoteEditor | null;
 }
@@ -55,16 +58,24 @@ const CreateNoteHeader = ({
   noteType,
   setNoteType,
   title = "",
+  orgId,
+  setOrgId,
   onTitleChange,
   editor,
 }: CreateNoteHeaderProps) => {
+  //  Tags Stats
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
-  const [folderPopoverOpen, setFolderPopoverOpen] = useState(false);
   const [newTagName, setNewTagName] = useState("");
   const [newTagColor, setNewTagColor] = useState("#3b82f6");
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+
+  //  Folder Stats
+  const [folderPopoverOpen, setFolderPopoverOpen] = useState(false);
   const [folder, setFolder] = useState<string>("");
   const [newFolder, setNewFolder] = useState("");
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+
+  //  Organization State
+  const [organizationPopoverOpen, setOrganizationPopoverOpen] = useState(false);
 
   // Tags
   const { data: tagsData } = useSuspenseTags();
@@ -75,23 +86,14 @@ const CreateNoteHeader = ({
   const { data: foldersData } = useSuspenseFolders();
   const createFolderMutation = useCreateFolder();
 
+  // Tags Functions
+
   useEffect(() => {
     if (tagsData) {
       const tags = tagsData.filter((tag) => tagsId.includes(tag.id));
       setSelectedTags(tags);
     }
   }, [tagsId, tagsData]);
-
-  useEffect(() => {
-    if (foldersData && folderId) {
-      const selectedFolder = foldersData.find((f) => f.id === folderId);
-      if (selectedFolder) {
-        setFolder(selectedFolder.name);
-      }
-    } else if (!folderId) {
-      setFolder("");
-    }
-  }, [folderId, foldersData]);
 
   const handleAddExistingTag = (tag: Tag) => {
     if (!selectedTags.find((t) => t.id === tag.id)) {
@@ -130,6 +132,8 @@ const CreateNoteHeader = ({
     onTagsChange?.(updatedTags);
   };
 
+  // Folders Functions
+
   const handleSelectFolder = (selectedFolder: { id: string; name: string }) => {
     setFolder(selectedFolder.name);
     setFolderId(selectedFolder.id);
@@ -153,6 +157,24 @@ const CreateNoteHeader = ({
       }
     }
   };
+
+  // Organizations Functions
+
+  const handleSelectOrg = ({ id }: { id: string; name: string }) => {
+    setOrgId(id);
+    setOrganizationPopoverOpen(false);
+  };
+
+  useEffect(() => {
+    if (foldersData && folderId) {
+      const selectedFolder = foldersData.find((f) => f.id === folderId);
+      if (selectedFolder) {
+        setFolder(selectedFolder.name);
+      }
+    } else if (!folderId) {
+      setFolder("");
+    }
+  }, [folderId, foldersData]);
 
   const availableTags =
     tagsData?.filter(
@@ -407,6 +429,15 @@ const CreateNoteHeader = ({
               </Popover>
             )}
           </div>
+
+          {/* Organizations Section */}
+          <ChooseOrganization
+            selectedOrgId={orgId || null}
+            onClearOrg={() => setOrgId("")}
+            organizationPopoverOpen={organizationPopoverOpen}
+            setOrganizationPopoverOpen={setOrganizationPopoverOpen}
+            onSelectOrg={handleSelectOrg}
+          />
 
           {/* Type Section */}
           <div className="flex items-center gap-4">

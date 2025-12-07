@@ -79,7 +79,12 @@ export const organizationRouter = createTRPCRouter({
           },
           teams: true,
           owner: true,
-          notes: true,
+          notes: {
+            include: {
+              user: true,
+              tags: true,
+            },
+          },
         },
       });
     }),
@@ -92,7 +97,7 @@ export const organizationRouter = createTRPCRouter({
         slug: z.string().optional(),
       })
     )
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       return await prisma.organization.update({
         where: {
           id: input.id,
