@@ -46,6 +46,8 @@ export default function NotesEditor({
   const { data: noteData, isLoading: isLoadingNote } = useNote(noteId);
   const currentContent = noteContent ?? internalContent;
 
+  console.log(noteData);
+
   useEffect(() => {
     if (editor && onEditorReady) {
       onEditorReady(editor);

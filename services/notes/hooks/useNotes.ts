@@ -17,9 +17,12 @@ export const useCreateNote = () => {
 
   return useMutation(
     trpc.notes.create.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (data) => {
         toast.success("Note created successfully");
         queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
+        queryClient.invalidateQueries(
+          trpc.organization.getOrgById.queryOptions({ id: data.org?.id ?? "" })
+        );
       },
       onError: () => {
         toast.error("Note creation failed");
@@ -102,6 +105,9 @@ export const useUpdateNote = () => {
         queryClient.invalidateQueries(
           trpc.notes.getOne.queryOptions({ id: data.id })
         );
+        queryClient.invalidateQueries(
+          trpc.organization.getOrgById.queryOptions({ id: data.org?.id ?? "" })
+        );
       },
       onError: (error) => {
         console.log(error);
@@ -141,6 +147,29 @@ export const useToggleFavoriteNote = () => {
     trpc.notes.toggleFavorite.mutationOptions({
       onSuccess: (data) => {
         toast.success("Note favorited successfully");
+        queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
+        queryClient.invalidateQueries(
+          trpc.notes.getAllTemplates.queryOptions()
+        );
+        queryClient.invalidateQueries(
+          trpc.notes.getOne.queryOptions({ id: data.id })
+        );
+      },
+      onError: (error) => {
+        console.log(error);
+      },
+    })
+  );
+};
+
+export const useTogglePublicShare = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.notes.togglePublicShare.mutationOptions({
+      onSuccess: (data) => {
+        toast.success("Note shared successfully");
         queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
         queryClient.invalidateQueries(
           trpc.notes.getAllTemplates.queryOptions()

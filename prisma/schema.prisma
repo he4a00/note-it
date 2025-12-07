@@ -84,6 +84,7 @@ enum NoteType {
 
 enum Visibility {
   PRIVATE
+  PUBLIC
   ORG
   TEAM
 }
@@ -152,6 +153,7 @@ model Note {
   team       Team?         @relation(fields: [teamId], references: [id])
   teamId     String?
   visibility Visibility    @default(PRIVATE)
+  shareId    String?       @unique
 
   @@index([userId])
   @@index([orgId])

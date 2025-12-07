@@ -1,7 +1,7 @@
 import prisma from "@/lib/db";
-import { pusherServer } from "@/lib/pusher";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { z } from "zod";
+import { nanoid } from "nanoid";
 
 export const notesRouter = createTRPCRouter({
   create: protectedProcedure
@@ -48,6 +48,11 @@ export const notesRouter = createTRPCRouter({
               },
             },
           }),
+        },
+        include: {
+          folder: true,
+          tags: true,
+          org: true,
         },
       });
 
@@ -261,5 +266,52 @@ export const notesRouter = createTRPCRouter({
           user: true,
         },
       });
+    }),
+
+  togglePublicShare: protectedProcedure
+    .input(z.object({ id: z.string(), isPublic: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const note = await prisma.note.findUniqueOrThrow({
+        where: {
+          id: input.id,
+          userId: ctx.auth.user.id,
+        },
+        select: {
+          shareId: true,
+        },
+      });
+
+      if (!note) {
+        throw new Error("Note not found");
+      }
+
+      if (input.isPublic) {
+        const newShareId = note.shareId ?? nanoid(16);
+        const updated = await prisma.note.update({
+          where: {
+            id: input.id,
+            userId: ctx.auth.user.id,
+          },
+          data: {
+            visibility: "PUBLIC",
+            shareId: newShareId,
+          },
+        });
+
+        return updated;
+      } else {
+        const updated = await prisma.note.update({
+          where: {
+            id: input.id,
+            userId: ctx.auth.user.id,
+          },
+          data: {
+            visibility: "PRIVATE",
+            shareId: null,
+          },
+        });
+
+        return updated;
+      }
     }),
 });
