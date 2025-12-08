@@ -74,7 +74,13 @@ const OrganizationNotes = ({
           )}
         >
           {displayedNotes.map((note) => (
-            <NoteCard key={note.id} note={note} viewMode="grid" />
+            <NoteCard
+              key={note.id}
+              note={note}
+              viewMode="grid"
+              selectedIds={[]}
+              setSelectedIds={() => {}}
+            />
           ))}
         </div>
       )}
