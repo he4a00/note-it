@@ -314,4 +314,77 @@ export const notesRouter = createTRPCRouter({
         return updated;
       }
     }),
+
+  bulkDelete: protectedProcedure
+    .input(z.array(z.string()))
+    .mutation(async ({ ctx, input }) => {
+      return await prisma.note.deleteMany({
+        where: {
+          id: {
+            in: input,
+          },
+          userId: ctx.auth.user.id,
+        },
+      });
+    }),
+
+  bulkTogglePin: protectedProcedure
+    .input(z.array(z.string()))
+    .mutation(async ({ ctx, input }) => {
+      const note = await prisma.note.findMany({
+        where: {
+          id: {
+            in: input,
+          },
+          userId: ctx.auth.user.id,
+        },
+        select: {
+          isPinned: true,
+        },
+      });
+
+      const updated = await prisma.note.updateMany({
+        where: {
+          id: {
+            in: input,
+          },
+          userId: ctx.auth.user.id,
+        },
+        data: {
+          isPinned: note[0].isPinned ? false : true,
+        },
+      });
+
+      return updated;
+    }),
+
+  bulkToggleFavorite: protectedProcedure
+    .input(z.array(z.string()))
+    .mutation(async ({ ctx, input }) => {
+      const note = await prisma.note.findMany({
+        where: {
+          id: {
+            in: input,
+          },
+          userId: ctx.auth.user.id,
+        },
+        select: {
+          isFavorite: true,
+        },
+      });
+
+      const updated = await prisma.note.updateMany({
+        where: {
+          id: {
+            in: input,
+          },
+          userId: ctx.auth.user.id,
+        },
+        data: {
+          isFavorite: note[0].isFavorite ? false : true,
+        },
+      });
+
+      return updated;
+    }),
 });

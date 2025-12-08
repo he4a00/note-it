@@ -184,3 +184,63 @@ export const useTogglePublicShare = () => {
     })
   );
 };
+
+export const useBulkDelete = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.notes.bulkDelete.mutationOptions({
+      onSuccess: () => {
+        toast.success("Notes deleted successfully");
+        queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
+        queryClient.invalidateQueries(
+          trpc.notes.getAllTemplates.queryOptions()
+        );
+      },
+      onError: (error) => {
+        toast.error("Notes deletion failed");
+      },
+    })
+  );
+};
+
+export const useBulkTogglePin = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.notes.bulkTogglePin.mutationOptions({
+      onSuccess: () => {
+        toast.success("Notes pinned successfully");
+        queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
+        queryClient.invalidateQueries(
+          trpc.notes.getAllTemplates.queryOptions()
+        );
+      },
+      onError: (error) => {
+        toast.error("Notes pinning failed");
+      },
+    })
+  );
+};
+
+export const useBulkToggleFavorite = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    trpc.notes.bulkToggleFavorite.mutationOptions({
+      onSuccess: (data) => {
+        toast.success("Notes favorited successfully");
+        queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
+        queryClient.invalidateQueries(
+          trpc.notes.getAllTemplates.queryOptions()
+        );
+      },
+      onError: (error) => {
+        toast.error("Notes favoriting failed");
+      },
+    })
+  );
+};

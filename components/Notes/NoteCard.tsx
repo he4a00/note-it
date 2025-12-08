@@ -15,6 +15,8 @@ import { motion } from "framer-motion";
 import NoteToolbox from "./NoteToolbox";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { Checkbox } from "../ui/checkbox";
+import { useState } from "react";
 
 export interface NoteCardProps {
   note: {
@@ -32,9 +34,16 @@ export interface NoteCardProps {
     }>;
   };
   viewMode?: "grid" | "list";
+  selectedIds: string[];
+  setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-const NoteCard = ({ note, viewMode = "grid" }: NoteCardProps) => {
+const NoteCard = ({
+  note,
+  viewMode = "grid",
+  selectedIds,
+  setSelectedIds,
+}: NoteCardProps) => {
   const isListView = viewMode === "list";
 
   return (
@@ -64,10 +73,21 @@ const NoteCard = ({ note, viewMode = "grid" }: NoteCardProps) => {
         {/* Type Badge */}
         <div
           className={cn(
-            "absolute z-10",
+            "absolute z-10 flex flex-row gap-2 items-center",
             isListView ? "top-2 left-2" : "top-0 left-0 p-3"
           )}
         >
+          <Checkbox
+            className="cursor-pointer border-zinc-200/90 dark:border-zinc-800/80"
+            checked={selectedIds.includes(note.id)}
+            onCheckedChange={(checked) => {
+              if (checked) {
+                setSelectedIds((prev) => [...prev, note.id]);
+              } else {
+                setSelectedIds((prev) => prev.filter((id) => id !== note.id));
+              }
+            }}
+          />
           <Badge
             variant="secondary"
             className={cn(

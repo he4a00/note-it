@@ -2,12 +2,13 @@
 
 import { useSuspenseNotes } from "@/services/notes/hooks/useNotes";
 import { cn } from "@/lib/utils";
-import { Suspense, useState, useTransition } from "react";
+import { Activity, Suspense, useState, useTransition } from "react";
 import { EmptyComponent } from "../shared/entity-components";
 import ViewToggle from "./ViewToggle";
 import NotesFilter from "./NotesFilter";
 import { useDebounce } from "@/hooks/use-debounce";
 import NoteCard from "./NoteCard";
+import BulkDeleteToolbox from "./BulkDeleteToolbox";
 
 const NotesList = () => {
   const [tagId, setTagId] = useState("");
@@ -17,6 +18,7 @@ const NotesList = () => {
   const [isFavorite, setIsFavorite] = useState<boolean | undefined>(undefined);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [isPending, startTransition] = useTransition();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const { data, isLoading } = useSuspenseNotes({
     tagId,
@@ -118,11 +120,23 @@ const NotesList = () => {
             </div>
           ) : (
             sortedData.map((note) => (
-              <NoteCard key={note.id} note={note} viewMode={viewMode} />
+              <NoteCard
+                key={note.id}
+                note={note}
+                viewMode={viewMode}
+                selectedIds={selectedIds}
+                setSelectedIds={setSelectedIds}
+              />
             ))
           )}
         </div>
       </Suspense>
+      <Activity mode={selectedIds.length > 0 ? "visible" : "hidden"}>
+        <BulkDeleteToolbox
+          selectedIds={selectedIds}
+          onClearSelection={() => setSelectedIds([])}
+        />
+      </Activity>
     </div>
   );
 };
