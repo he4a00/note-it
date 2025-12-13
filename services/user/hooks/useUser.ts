@@ -19,3 +19,11 @@ export const useUpdateUser = () => {
     })
   );
 };
+
+export const useSearchUsers = (q: string) => {
+  const trpc = useTRPC();
+  return useQuery({
+    ...trpc.user.searchUsers.queryOptions({ q }),
+    enabled: q.length > 0,
+  });
+};

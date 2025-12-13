@@ -27,6 +27,7 @@ model User {
   organizationMembers OrganizationMember[]
   teamMembers         TeamMember[]
   activities          Activity[]
+  comments            Comment[]
 
   @@unique([email])
   @@map("user")
@@ -154,6 +155,7 @@ model Note {
   teamId     String?
   visibility Visibility    @default(PRIVATE)
   shareId    String?       @unique
+  comments   Comment[]
 
   @@index([userId])
   @@index([orgId])
@@ -251,4 +253,19 @@ model TeamMember {
   @@unique([teamId, userId])
   @@index([userId])
   @@index([teamId, role])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  noteId String
+  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
 }

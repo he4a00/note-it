@@ -35,4 +35,20 @@ export const userRouter = createTRPCRouter({
         },
       });
     }),
+
+  searchUsers: protectedProcedure
+    .input(z.object({ q: z.string().min(1) }))
+    .query(async ({ input }) => {
+      const q = input.q;
+      return prisma.user.findMany({
+        where: {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { name: { contains: q, mode: "insensitive" } },
+          ],
+        },
+        select: { id: true, name: true, image: true },
+        take: 10,
+      });
+    }),
 });

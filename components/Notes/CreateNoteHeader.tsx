@@ -31,6 +31,7 @@ import { Label } from "../ui/label";
 import NoteMenu from "../shared/Menu/note-menu";
 import { BlockNoteEditor } from "@blocknote/core";
 import ChooseOrganization from "./ChooseOrganization";
+import CreateComment from "./CreateComment";
 
 interface CreateNoteHeaderProps {
   onTagsChange?: (tags: Tag[]) => void;
@@ -46,6 +47,7 @@ interface CreateNoteHeaderProps {
   setOrgId: (orgId: string) => void;
   onTitleChange?: (title: string) => void;
   editor?: BlockNoteEditor | null;
+  noteId?: string;
 }
 
 const CreateNoteHeader = ({
@@ -62,6 +64,7 @@ const CreateNoteHeader = ({
   setOrgId,
   onTitleChange,
   editor,
+  noteId,
 }: CreateNoteHeaderProps) => {
   //  Tags Stats
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
@@ -195,7 +198,7 @@ const CreateNoteHeader = ({
       </div>
 
       {/* Metadata Section */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-border/30">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 ">
         {/* Tags and Folder Section */}
         <div className="flex items-center gap-4">
           {/* Tags Section */}
@@ -461,7 +464,9 @@ const CreateNoteHeader = ({
             </RadioGroup>
           </div>
         </div>
-        <NoteMenu editor={editor} noteTitle={title} />
+        <div className="flex flex-row gap-2 items-center">
+          <NoteMenu editor={editor} noteTitle={title} />
+        </div>
       </div>
     </div>
   );

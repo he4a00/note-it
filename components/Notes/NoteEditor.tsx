@@ -46,8 +46,6 @@ export default function NotesEditor({
   const { data: noteData, isLoading: isLoadingNote } = useNote(noteId);
   const currentContent = noteContent ?? internalContent;
 
-  console.log(noteData);
-
   useEffect(() => {
     if (editor && onEditorReady) {
       onEditorReady(editor);
@@ -68,7 +66,7 @@ export default function NotesEditor({
       if (editor && noteData) {
         if (noteData.content) {
           const blocks = JSON.parse(noteData.content);
-          editor.replaceBlocks(editor.document, blocks);
+          editor?.replaceBlocks(editor.document, blocks);
           // setLastSavedContent(noteData.content);
           if (!noteContent) {
             setInternalContent(noteData.content);
@@ -148,10 +146,10 @@ export default function NotesEditor({
   }
 
   return (
-    <div className="flex flex-row h-full w-full bg-background min-h-screen">
+    <div className="flex flex-row h-full flex-2 w-full bg-background min-h-screen">
       {/* Main Editor Area */}
       <div className="flex-1 flex flex-col items-center relative">
-        <div className="w-full max-w-5xl flex flex-col gap-8">
+        <div className="w-full flex flex-col gap-8">
           {/* Header Section */}
           <div className="flex flex-col gap-2 group">
             <div className="flex items-center justify-between h-6">
@@ -223,6 +221,7 @@ export default function NotesEditor({
                 editor={editor}
                 orgId={organizationId}
                 setOrgId={handleOrgChange}
+                noteId={noteId}
               />
             )}
           </div>
