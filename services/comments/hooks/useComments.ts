@@ -40,3 +40,18 @@ export const useDeleteComment = () => {
     })
   );
 };
+
+export const useUpdateComment = () => {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  return useMutation(
+    trpc.comments.update.mutationOptions({
+      onSuccess: (data) => {
+        toast.success("Comment updated successfully");
+        queryClient.invalidateQueries(
+          trpc.comments.getForNote.queryOptions({ noteId: data.noteId })
+        );
+      },
+    })
+  );
+};

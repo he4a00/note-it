@@ -106,4 +106,20 @@ export const commentRouter = createTRPCRouter({
 
       return comments;
     }),
+
+  update: protectedProcedure
+    .input(z.object({ id: z.string(), content: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const comment = await prisma.comment.update({
+        where: {
+          id: input.id,
+          userId: ctx.auth.user.id,
+        },
+        data: {
+          content: input.content,
+        },
+      });
+
+      return comment;
+    }),
 });

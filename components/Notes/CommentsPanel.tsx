@@ -3,9 +3,12 @@
 import { useCommentsForNote } from "@/services/comments/hooks/useComments";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { formatDistanceToNow } from "date-fns";
-import { MessageCircle, Loader2, Trash } from "lucide-react";
+import { MessageCircle, Loader2, Trash, Edit2 } from "lucide-react";
 import CreateComment from "./CreateComment";
 import DeleteComment from "./DeleteComment";
+import EditComment from "./EditComment";
+import { Button } from "../ui/button";
+import { useState } from "react";
 
 interface CommentsPanelProps {
   noteId: string;
@@ -13,6 +16,7 @@ interface CommentsPanelProps {
 
 const CommentsPanel = ({ noteId }: CommentsPanelProps) => {
   const { data: comments, isLoading } = useCommentsForNote({ noteId });
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const getInitials = (name: string) => {
     return name
@@ -24,7 +28,7 @@ const CommentsPanel = ({ noteId }: CommentsPanelProps) => {
   };
 
   return (
-    <div className="w-full max-w-md h-[80vh] flex flex-col bg-background">
+    <div className="w-full h-[80vh] flex flex-col bg-background">
       {/* Header */}
       <div className="flex items-center gap-3 pb-5 border-b border-border/60">
         <div className="flex items-center justify-center size-8 rounded-lg bg-primary/10">
@@ -60,7 +64,7 @@ const CommentsPanel = ({ noteId }: CommentsPanelProps) => {
                 </AvatarFallback>
               </Avatar>
 
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 w-full">
                 <div className="flex items-baseline gap-2 mb-0.5">
                   <span className="font-semibold text-sm text-foreground">
                     {comment.user.name}
@@ -71,11 +75,31 @@ const CommentsPanel = ({ noteId }: CommentsPanelProps) => {
                     })}
                   </span>
                 </div>
-                <p className="text-sm text-foreground/85 leading-relaxed break-words">
-                  {comment.content}
-                </p>
+                {editingId === comment.id ? (
+                  <EditComment
+                    commentId={comment.id}
+                    content={comment.content}
+                    onClose={() => setEditingId(null)}
+                  />
+                ) : (
+                  <p className="text-sm text-foreground/85 leading-relaxed break-words">
+                    {comment.content}
+                  </p>
+                )}
               </div>
-              <DeleteComment commentId={comment.id} />
+              {editingId !== comment.id && (
+                <div className="flex flex-row items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DeleteComment commentId={comment.id} />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 text-muted-foreground hover:text-primary"
+                    onClick={() => setEditingId(comment.id)}
+                  >
+                    <Edit2 className="size-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           ))
         ) : (
