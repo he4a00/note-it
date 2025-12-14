@@ -99,6 +99,7 @@ export const organizationRouter = createTRPCRouter({
             include: {
               user: true,
               tags: true,
+              comments: true,
             },
           },
         },

@@ -10,7 +10,14 @@ import {
 import { extractTextFromBlockNote } from "@/lib/utils/extractTextFromBlockNote";
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
-import { Pin, FileText, Sparkles, Heart, Clock } from "lucide-react";
+import {
+  Pin,
+  FileText,
+  Sparkles,
+  Heart,
+  Clock,
+  MessageCircle,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import NoteToolbox from "./NoteToolbox";
 import { formatDistanceToNow } from "date-fns";
@@ -32,6 +39,7 @@ export interface NoteCardProps {
       name: string;
       color: string;
     }>;
+    comments: Array<{ id: string }>;
   };
   viewMode?: "grid" | "list";
   selectedIds: string[];
@@ -195,7 +203,7 @@ const NoteCard = ({
                   key={tag.id}
                   className={cn(
                     "flex items-center gap-1.5 px-2 py-0.5 h-6",
-                    "text-[10px] font-medium",
+                    "text-[12px] font-medium",
                     "bg-zinc-100/80 dark:bg-zinc-800/80",
                     "text-zinc-600 dark:text-zinc-400",
                     "border-0 shadow-sm"
@@ -203,26 +211,36 @@ const NoteCard = ({
                 >
                   <span
                     style={{ backgroundColor: tag.color }}
-                    className="w-2 h-2 rounded-full ring-1 ring-white/20"
+                    className="w-3 h-3 rounded-full ring-1 ring-white/20"
                   />
                   <span className="truncate max-w-[60px]">{tag.name}</span>
                 </Badge>
               ))}
               {note.tags.length > (isListView ? 2 : 3) && (
-                <span className="text-[10px] text-muted-foreground font-medium">
+                <span className="text-[12px] text-muted-foreground font-medium">
                   +{note.tags.length - (isListView ? 2 : 3)}
                 </span>
               )}
             </div>
 
             {/* Timestamp */}
-            <div className="flex items-center gap-1 text-zinc-400 dark:text-zinc-500 flex-shrink-0">
-              <Clock className="h-3 w-3" />
-              <p className="text-[10px] font-medium whitespace-nowrap">
-                {formatDistanceToNow(new Date(note.updatedAt), {
-                  addSuffix: true,
-                })}
-              </p>
+            <div className="flex items-center gap-3">
+              {note.comments.length > 0 && (
+                <div className="flex items-center gap-1 text-zinc-400 dark:text-zinc-500 flex-shrink-0">
+                  <MessageCircle className="h-4 w-4" />
+                  <p className="text-[12px] font-medium whitespace-nowrap">
+                    {note.comments.length}
+                  </p>
+                </div>
+              )}
+              <div className="flex items-center gap-1 text-zinc-400 dark:text-zinc-500 flex-shrink-0">
+                <Clock className="h-4 w-4" />
+                <p className="text-[12px] font-medium whitespace-nowrap">
+                  {formatDistanceToNow(new Date(note.updatedAt), {
+                    addSuffix: true,
+                  })}
+                </p>
+              </div>
             </div>
           </div>
         </CardFooter>

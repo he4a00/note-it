@@ -157,6 +157,7 @@ export const notesRouter = createTRPCRouter({
           folder: true,
           tags: true,
           org: true,
+          comments: true,
         },
       });
 

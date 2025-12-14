@@ -37,6 +37,7 @@ const OrganizationPage = ({ orgId }: { orgId: string }) => {
     isFavorite: note.isFavorite,
     updatedAt: note.updatedAt,
     tags: note.tags || [],
+    comments: note.comments || [],
   }));
 
   return (

@@ -21,6 +21,7 @@ export const useCreateComment = () => {
         queryClient.invalidateQueries(
           trpc.comments.getForNote.queryOptions({ noteId: data.noteId })
         );
+        queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
       },
     })
   );
@@ -36,6 +37,7 @@ export const useDeleteComment = () => {
         queryClient.invalidateQueries(
           trpc.comments.getForNote.queryOptions({ noteId: data.noteId })
         );
+        queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
       },
     })
   );
@@ -51,6 +53,7 @@ export const useUpdateComment = () => {
         queryClient.invalidateQueries(
           trpc.comments.getForNote.queryOptions({ noteId: data.noteId })
         );
+        queryClient.invalidateQueries(trpc.notes.getAllNotes.queryOptions());
       },
     })
   );

@@ -19,6 +19,7 @@ export interface OrganizationNotesProps {
       name: string;
       color: string;
     }>;
+    comments: Array<{ id: string }>;
   }>;
   maxDisplay?: number;
   showViewAll?: boolean;

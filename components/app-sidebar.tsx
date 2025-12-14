@@ -4,6 +4,8 @@ import {
   Home,
   Settings,
   Star,
+  Layout,
+  FolderOpen,
   Trash2,
   Folder,
   Building2,
@@ -33,6 +35,7 @@ import Link from "next/link";
 import { useGetUser } from "@/services/user/hooks/useUser";
 import { useGetMyOrgs } from "@/services/organizations/hooks/useOrganization";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 
 const items = [
   {
@@ -53,12 +56,14 @@ export function AppSidebar() {
   const { data: session } = authClient.useSession();
   const { data: loggedUser } = useGetUser(session?.user?.id || "");
   const myOrgs = useGetMyOrgs();
+  const pathname = usePathname();
 
   return (
     <Sidebar>
-      <SidebarContent className="mt-10 gap-6">
+      <SidebarContent className="mt-6 gap-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60 px-2 mb-2">
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60 px-2 mb-2 flex items-center gap-2">
+            <Layout className="h-3 w-3" />
             Application
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -67,6 +72,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
+                    isActive={pathname === item.url}
                     className="hover:bg-sidebar-accent/50 transition-all duration-200"
                   >
                     <Link href={item.url} prefetch className="gap-3">
@@ -103,6 +109,9 @@ export function AppSidebar() {
                   <SidebarMenuItem key={org.id}>
                     <SidebarMenuButton
                       asChild
+                      isActive={
+                        pathname === `/dashboard/organization/${org.id}`
+                      }
                       className="hover:bg-sidebar-accent/50 transition-all duration-200"
                     >
                       <Link
@@ -133,7 +142,8 @@ export function AppSidebar() {
         </SidebarGroup>
         {/* Folders */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60 px-2 mb-2">
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/60 px-2 mb-2 flex items-center gap-2">
+            <FolderOpen className="h-3 w-3" />
             Folders
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -154,6 +164,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={folder.id}>
                     <SidebarMenuButton
                       asChild
+                      isActive={pathname === `/dashboard/folders/${folder.id}`}
                       className="hover:bg-sidebar-accent/50 transition-all duration-200 group"
                     >
                       <Link
@@ -202,6 +213,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={tag.id}>
                     <SidebarMenuButton
                       asChild
+                      isActive={pathname === `/dashboard/tags/${tag.id}`}
                       className="hover:bg-sidebar-accent/50 transition-all duration-200 group"
                     >
                       <Link
