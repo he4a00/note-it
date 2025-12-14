@@ -3,11 +3,27 @@ import { extractMEntionsUserIds } from "@/lib/utils/mentions";
 import { pusherServer } from "@/lib/pusher";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import z from "zod";
+import { getUserContext, checkNotePermission } from "@/lib/permissions";
+import { TRPCError } from "@trpc/server";
 
 export const commentRouter = createTRPCRouter({
   create: protectedProcedure
     .input(z.object({ content: z.string(), noteId: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      const note = await prisma.note.findUniqueOrThrow({
+        where: { id: input.noteId },
+      });
+
+      const userContext = await getUserContext(ctx.auth.user.id);
+      const permissions = checkNotePermission(note, userContext);
+
+      if (!permissions.canComment) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to comment on this note",
+        });
+      }
+
       const comment = await prisma.comment.create({
         data: {
           content: input.content,
@@ -62,6 +78,20 @@ export const commentRouter = createTRPCRouter({
   getForNote: protectedProcedure
     .input(z.object({ noteId: z.string() }))
     .query(async ({ ctx, input }) => {
+      const note = await prisma.note.findUniqueOrThrow({
+        where: { id: input.noteId },
+      });
+
+      const userContext = await getUserContext(ctx.auth.user.id);
+      const permissions = checkNotePermission(note, userContext);
+
+      if (!permissions.canView) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to view comments for this note",
+        });
+      }
+
       const comments = await prisma.comment.findMany({
         where: {
           noteId: input.noteId,

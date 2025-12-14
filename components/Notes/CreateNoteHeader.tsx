@@ -18,7 +18,7 @@ import {
   CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
-import { FolderIcon, PlusIcon, XIcon } from "lucide-react";
+import { FolderIcon, Globe, Lock, PlusIcon, Users, XIcon } from "lucide-react";
 import { useSuspenseTags, useCreateTag } from "@/services/tags/hooks/useTags";
 import { Tag } from "@/lib/generated/prisma";
 import TagColorPicker from "./TagColorPicker";
@@ -28,6 +28,13 @@ import {
 } from "@/services/folders/hooks/useFolders";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import NoteMenu from "../shared/Menu/note-menu";
 import { BlockNoteEditor } from "@blocknote/core";
 import ChooseOrganization from "./ChooseOrganization";
@@ -48,6 +55,9 @@ interface CreateNoteHeaderProps {
   onTitleChange?: (title: string) => void;
   editor?: BlockNoteEditor | null;
   noteId?: string;
+  readOnly?: boolean;
+  visibility?: "PRIVATE" | "ORG" | "TEAM";
+  setVisibility?: (visibility: "PRIVATE" | "ORG" | "TEAM") => void;
 }
 
 const CreateNoteHeader = ({
@@ -65,6 +75,9 @@ const CreateNoteHeader = ({
   onTitleChange,
   editor,
   noteId,
+  readOnly = false,
+  visibility = "PRIVATE",
+  setVisibility,
 }: CreateNoteHeaderProps) => {
   //  Tags Stats
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
@@ -193,16 +206,17 @@ const CreateNoteHeader = ({
           value={title}
           onChange={(e) => onTitleChange?.(e.target.value)}
           placeholder="Untitled"
-          className="w-full bg-transparent border-none outline-none text-5xl font-bold text-foreground placeholder:text-muted-foreground/30 focus:placeholder:text-muted-foreground/50 transition-colors font-serif leading-tight py-2"
+          disabled={readOnly}
+          className="w-full bg-transparent border-none outline-none text-3xl lg:text-5xl font-bold text-foreground placeholder:text-muted-foreground/30 focus:placeholder:text-muted-foreground/50 transition-colors font-serif leading-tight py-2 disabled:cursor-not-allowed disabled:opacity-50"
         />
       </div>
 
       {/* Metadata Section */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 ">
+      <div className="flex flex-wrap items-center justify-between gap-4 gap-y-6 pb-4 ">
         {/* Tags and Folder Section */}
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4 gap-y-6">
           {/* Tags Section */}
-          <div className="flex flex-row items-center gap-2 flex-1">
+          <div className="flex flex-wrap items-center gap-2 max-w-full">
             {/* Selected Tags */}
             {selectedTags.map((tag) => (
               <Badge
@@ -219,207 +233,98 @@ const CreateNoteHeader = ({
                   style={{ backgroundColor: tag.color }}
                 />
                 <span className="text-[13px]">{tag.name}</span>
-                <button
-                  onClick={() => handleRemoveTag(tag.id)}
-                  className="rounded-sm hover:bg-destructive/20 p-0.5"
-                >
-                  <XIcon className="size-3" />
-                </button>
+                {!readOnly && (
+                  <button
+                    onClick={() => handleRemoveTag(tag.id)}
+                    className="rounded-sm hover:bg-destructive/20 p-0.5"
+                  >
+                    <XIcon className="size-3" />
+                  </button>
+                )}
               </Badge>
             ))}
 
             {/* Add Tag Popover */}
-            <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-6 px-2 gap-1 text-xs"
-                >
-                  <PlusIcon className="size-3" />
-                  Add Tag
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="w-[350px] p-0"
-                align="start"
-                onInteractOutside={(e) => {
-                  e.preventDefault();
-                }}
-              >
-                <Command>
-                  <CommandInput placeholder="Search tags..." />
-                  <CommandList>
-                    {availableTags.length > 0 && (
-                      <Suspense fallback={<div>Loading...</div>}>
-                        <CommandGroup heading="Existing Tags">
-                          {availableTags.map((tag: Tag) => (
-                            <CommandItem
-                              key={tag.id}
-                              onSelect={() => handleAddExistingTag(tag)}
-                              className="flex items-center gap-2"
-                            >
-                              <div
-                                className="size-3 rounded-full"
-                                style={{ backgroundColor: tag.color }}
-                              />
-                              <span className="text-sm font-medium">
-                                {tag.name}
-                              </span>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </Suspense>
-                    )}
-
-                    {availableTags.length > 0 && <CommandSeparator />}
-
-                    <div className="p-3">
-                      <p className="text-xs font-medium mb-3 text-muted-foreground">
-                        Create New Tag
-                      </p>
-                      <div className="flex flex-col gap-3">
-                        <Input
-                          placeholder="Tag name"
-                          value={newTagName}
-                          onChange={(e) => setNewTagName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              handleCreateAndAddTag();
-                            }
-                          }}
-                          className="h-9"
-                        />
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            Color:
-                          </span>
-                          <TagColorPicker
-                            color={newTagColor}
-                            onChange={setNewTagColor}
-                          />
-                          <Button
-                            size="sm"
-                            onClick={handleCreateAndAddTag}
-                            disabled={
-                              !newTagName.trim() || createTagMutation.isPending
-                            }
-                            className="ml-auto"
-                          >
-                            {createTagMutation.isPending
-                              ? "Creating..."
-                              : "Create"}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          {/* Folder Section */}
-          <div className="flex flex-row items-center gap-2">
-            {folder ? (
-              <Badge
-                variant="outline"
-                className="gap-1 pr-1 cursor-pointer hover:bg-accent text-[13px]"
-              >
-                <FolderIcon className="size-3" />
-                {folder}
-                <button
-                  onClick={() => {
-                    setFolder("");
-                    onFolderChange?.("");
-                    setFolderId("");
-                  }}
-                  className="rounded-sm hover:bg-destructive/20 p-0.5"
-                >
-                  <XIcon className="size-3" />
-                </button>
-              </Badge>
-            ) : (
-              <Popover
-                open={folderPopoverOpen}
-                onOpenChange={setFolderPopoverOpen}
-              >
+            {!readOnly && (
+              <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
                     className="h-6 px-2 gap-1 text-xs"
                   >
-                    <FolderIcon className="size-3" />
-                    Select Folder
+                    <PlusIcon className="size-3" />
+                    Add Tag
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                  className="w-[300px] p-0"
+                  className="w-[350px] p-0"
                   align="start"
                   onInteractOutside={(e) => {
                     e.preventDefault();
                   }}
                 >
                   <Command>
-                    <CommandInput placeholder="Search folders..." />
+                    <CommandInput placeholder="Search tags..." />
                     <CommandList>
-                      {foldersData && foldersData.length > 0 ? (
-                        <CommandGroup heading="Existing Folders">
-                          {foldersData.map((folderItem) => (
-                            <CommandItem
-                              key={folderItem.id}
-                              onSelect={() => handleSelectFolder(folderItem)}
-                              style={{
-                                backgroundColor: "transparent",
-                              }}
-                              className="flex items-center gap-2 mt-2 cursor-pointer hover:bg-[#eee]"
-                            >
-                              <FolderIcon className="size-4" />
-                              <span className="text-sm font-medium">
-                                {folderItem.name}
-                              </span>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      ) : (
-                        <CommandEmpty>
-                          <p className="text-sm text-muted-foreground">
-                            No folders found.
-                          </p>
-                        </CommandEmpty>
+                      {availableTags.length > 0 && (
+                        <Suspense fallback={<div>Loading...</div>}>
+                          <CommandGroup heading="Existing Tags">
+                            {availableTags.map((tag: Tag) => (
+                              <CommandItem
+                                key={tag.id}
+                                onSelect={() => handleAddExistingTag(tag)}
+                                className="flex items-center gap-2"
+                              >
+                                <div
+                                  className="size-3 rounded-full"
+                                  style={{ backgroundColor: tag.color }}
+                                />
+                                <span className="text-sm font-medium">
+                                  {tag.name}
+                                </span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </Suspense>
                       )}
 
-                      {foldersData && foldersData.length > 0 && (
-                        <CommandSeparator />
-                      )}
+                      {availableTags.length > 0 && <CommandSeparator />}
 
                       <div className="p-3">
                         <p className="text-xs font-medium mb-3 text-muted-foreground">
-                          Create New Folder
+                          Create New Tag
                         </p>
                         <div className="flex flex-col gap-3">
                           <Input
-                            placeholder="Folder name"
-                            value={newFolder}
-                            onChange={(e) => setNewFolder(e.target.value)}
+                            placeholder="Tag name"
+                            value={newTagName}
+                            onChange={(e) => setNewTagName(e.target.value)}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
-                                handleCreateFolder();
+                                handleCreateAndAddTag();
                               }
                             }}
                             className="h-9"
                           />
-                          <div className="flex justify-end">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
+                              Color:
+                            </span>
+                            <TagColorPicker
+                              color={newTagColor}
+                              onChange={setNewTagColor}
+                            />
                             <Button
                               size="sm"
-                              onClick={handleCreateFolder}
+                              onClick={handleCreateAndAddTag}
                               disabled={
-                                !newFolder.trim() ||
-                                createFolderMutation.isPending
+                                !newTagName.trim() ||
+                                createTagMutation.isPending
                               }
+                              className="ml-auto"
                             >
-                              {createFolderMutation.isPending
+                              {createTagMutation.isPending
                                 ? "Creating..."
                                 : "Create"}
                             </Button>
@@ -433,14 +338,167 @@ const CreateNoteHeader = ({
             )}
           </div>
 
+          {/* Folder Section */}
+          <div className="flex flex-row items-center gap-2">
+            {folder ? (
+              <Badge
+                variant="outline"
+                className="gap-1 pr-1 cursor-pointer hover:bg-accent text-[13px]"
+              >
+                <FolderIcon className="size-3" />
+                {folder}
+                {!readOnly && (
+                  <button
+                    onClick={() => {
+                      setFolder("");
+                      onFolderChange?.("");
+                      setFolderId("");
+                    }}
+                    className="rounded-sm hover:bg-destructive/20 p-0.5"
+                  >
+                    <XIcon className="size-3" />
+                  </button>
+                )}
+              </Badge>
+            ) : (
+              !readOnly && (
+                <Popover
+                  open={folderPopoverOpen}
+                  onOpenChange={setFolderPopoverOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-6 px-2 gap-1 text-xs"
+                    >
+                      <FolderIcon className="size-3" />
+                      Select Folder
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[300px] p-0"
+                    align="start"
+                    onInteractOutside={(e) => {
+                      e.preventDefault();
+                    }}
+                  >
+                    <Command>
+                      <CommandInput placeholder="Search folders..." />
+                      <CommandList>
+                        {foldersData && foldersData.length > 0 ? (
+                          <CommandGroup heading="Existing Folders">
+                            {foldersData.map((folderItem) => (
+                              <CommandItem
+                                key={folderItem.id}
+                                onSelect={() => handleSelectFolder(folderItem)}
+                                style={{
+                                  backgroundColor: "transparent",
+                                }}
+                                className="flex items-center gap-2 mt-2 cursor-pointer hover:bg-[#eee]"
+                              >
+                                <FolderIcon className="size-4" />
+                                <span className="text-sm font-medium">
+                                  {folderItem.name}
+                                </span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        ) : (
+                          <CommandEmpty>
+                            <p className="text-sm text-muted-foreground">
+                              No folders found.
+                            </p>
+                          </CommandEmpty>
+                        )}
+
+                        {foldersData && foldersData.length > 0 && (
+                          <CommandSeparator />
+                        )}
+
+                        <div className="p-3">
+                          <p className="text-xs font-medium mb-3 text-muted-foreground">
+                            Create New Folder
+                          </p>
+                          <div className="flex flex-col gap-3">
+                            <Input
+                              placeholder="Folder name"
+                              value={newFolder}
+                              onChange={(e) => setNewFolder(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  handleCreateFolder();
+                                }
+                              }}
+                              className="h-9"
+                            />
+                            <div className="flex justify-end">
+                              <Button
+                                size="sm"
+                                onClick={handleCreateFolder}
+                                disabled={
+                                  !newFolder.trim() ||
+                                  createFolderMutation.isPending
+                                }
+                              >
+                                {createFolderMutation.isPending
+                                  ? "Creating..."
+                                  : "Create"}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              )
+            )}
+          </div>
+
           {/* Organizations Section */}
-          <ChooseOrganization
-            selectedOrgId={orgId || null}
-            onClearOrg={() => setOrgId("")}
-            organizationPopoverOpen={organizationPopoverOpen}
-            setOrganizationPopoverOpen={setOrganizationPopoverOpen}
-            onSelectOrg={handleSelectOrg}
-          />
+          {!readOnly && (
+            <ChooseOrganization
+              selectedOrgId={orgId || null}
+              onClearOrg={() => setOrgId("")}
+              organizationPopoverOpen={organizationPopoverOpen}
+              setOrganizationPopoverOpen={setOrganizationPopoverOpen}
+              onSelectOrg={handleSelectOrg}
+            />
+          )}
+
+          {/* Visibility Section */}
+          <Select
+            value={visibility}
+            onValueChange={(value) =>
+              setVisibility?.(value as "PRIVATE" | "ORG" | "TEAM")
+            }
+            disabled={readOnly}
+          >
+            <SelectTrigger className="w-[140px] h-8 text-xs">
+              <SelectValue placeholder="Select visibility" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="PRIVATE">
+                <div className="flex items-center gap-2">
+                  <Lock className="h-3 w-3" />
+                  <span>Private</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="ORG">
+                <div className="flex items-center gap-2">
+                  <Globe className="h-3 w-3" />
+                  <span>Organization</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="TEAM">
+                <div className="flex items-center gap-2">
+                  <Users className="h-3 w-3" />
+                  <span>Team</span>
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Type Section */}
           <div className="flex items-center gap-4">
@@ -450,6 +508,7 @@ const CreateNoteHeader = ({
                 setNoteType(value as "NOTE" | "TEMPLATE")
               }
               className="flex flex-row gap-2"
+              disabled={readOnly}
             >
               <RadioGroupItem
                 className="border-2 border-gray-400"
@@ -465,7 +524,7 @@ const CreateNoteHeader = ({
           </div>
         </div>
         <div className="flex flex-row gap-2 items-center">
-          <NoteMenu editor={editor} noteTitle={title} />
+          <NoteMenu editor={editor} noteTitle={title} readOnly={readOnly} />
         </div>
       </div>
     </div>

@@ -28,7 +28,6 @@ const OrganizationPage = ({ orgId }: { orgId: string }) => {
     );
   }
 
-  // Transform notes data to match NoteCard props
   const orgNotes = (org.data?.notes || []).map((note) => ({
     id: note.id,
     type: note.type as "NOTE" | "TEMPLATE",

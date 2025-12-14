@@ -10,8 +10,11 @@ import { useNote, useUpdateNote } from "@/services/notes/hooks/useNotes";
 import CreateNoteHeader from "./CreateNoteHeader";
 import { Tag } from "@/lib/generated/prisma";
 import { formatDistanceToNow } from "date-fns";
-import { Cloud } from "lucide-react";
+import { Cloud, Lock, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -40,11 +43,29 @@ export default function NotesEditor({
   const [tagsId, setTagsId] = useState<string[]>([]);
   const [folderId, setFolderId] = useState<string>("");
   const [organizationId, setOrganizationId] = useState<string>("");
+  const [visibility, setVisibility] = useState<"PRIVATE" | "ORG" | "TEAM">(
+    "PRIVATE"
+  );
   const [noteType, setNoteType] = useState<"NOTE" | "TEMPLATE">("NOTE");
   const [internalContent, setInternalContent] = useState<string>("");
   const { theme } = useTheme();
-  const { data: noteData, isLoading: isLoadingNote } = useNote(noteId);
+  const {
+    data: noteData,
+    isLoading: isLoadingNote,
+    error,
+    isError,
+  } = useNote(noteId);
   const currentContent = noteContent ?? internalContent;
+  const router = useRouter();
+  useEffect(() => {
+    if (isError && error?.data?.code === "FORBIDDEN") {
+      toast.error("You do not have permission to view this note");
+      router.push("/dashboard");
+    }
+  }, [isError, error, router]);
+
+  const canEdit = noteId ? noteData?.permissions?.canEdit ?? false : true;
+  const isReadOnly = !canEdit;
 
   useEffect(() => {
     if (editor && onEditorReady) {
@@ -81,6 +102,9 @@ export default function NotesEditor({
         if (noteData.title) {
           setTitle(noteData.title);
         }
+        if (noteData.visibility && noteData.visibility !== "PUBLIC") {
+          setVisibility(noteData.visibility);
+        }
       }
     }
     loadInitialData();
@@ -96,6 +120,12 @@ export default function NotesEditor({
 
   const handleOrgChange = (newOrgId: string) => {
     setOrganizationId(newOrgId);
+  };
+
+  const handleVisibilityChange = (
+    newVisibility: "PRIVATE" | "ORG" | "TEAM"
+  ) => {
+    setVisibility(newVisibility);
   };
 
   const handleNoteTypeChange = (newNoteType: "NOTE" | "TEMPLATE") => {
@@ -152,7 +182,7 @@ export default function NotesEditor({
         <div className="w-full flex flex-col gap-8">
           {/* Header Section */}
           <div className="flex flex-col gap-2 group">
-            <div className="flex items-center justify-between h-6">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 lg:gap-0 h-auto lg:h-6">
               {/* Breadcrumbs */}
               <Breadcrumb>
                 <BreadcrumbList className="text-sm">
@@ -182,20 +212,38 @@ export default function NotesEditor({
               </Breadcrumb>
               {/* Save Status Indicator */}
               <div className="flex flex-row items-center gap-2">
-                <div className="flex items-center gap-2 text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground">
-                  <Cloud className="h-3.5 w-3.5" />
-                  <span>
-                    {noteData?.updatedAt
-                      ? `Edited ${formatDistanceToNow(
-                          new Date(noteData.updatedAt),
-                          {
-                            addSuffix: true,
-                          }
-                        )}`
-                      : "All changes saved"}
-                  </span>
-                </div>
+                {/* Permission Badge */}
                 {noteId && (
+                  <Badge
+                    variant={isReadOnly ? "secondary" : "outline"}
+                    className="gap-1"
+                  >
+                    {isReadOnly ? (
+                      <Lock className="size-3" />
+                    ) : (
+                      <Pencil className="size-3" />
+                    )}
+                    {isReadOnly ? "Read Only" : "Editable"}
+                  </Badge>
+                )}
+
+                {!isReadOnly && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground/60 transition-colors hover:text-muted-foreground">
+                    <Cloud className="h-3.5 w-3.5" />
+                    <span>
+                      {noteData?.updatedAt
+                        ? `Edited ${formatDistanceToNow(
+                            new Date(noteData.updatedAt),
+                            {
+                              addSuffix: true,
+                            }
+                          )}`
+                        : "All changes saved"}
+                    </span>
+                  </div>
+                )}
+
+                {noteId && !isReadOnly && (
                   <SaveNoteButton
                     noteId={noteId}
                     currentContent={currentContent}
@@ -204,6 +252,7 @@ export default function NotesEditor({
                     folderId={folderId}
                     noteType={noteType}
                     orgId={organizationId}
+                    visibility={visibility}
                   />
                 )}
               </div>
@@ -221,7 +270,10 @@ export default function NotesEditor({
                 editor={editor}
                 orgId={organizationId}
                 setOrgId={handleOrgChange}
+                visibility={visibility}
+                setVisibility={handleVisibilityChange}
                 noteId={noteId}
+                readOnly={isReadOnly}
               />
             )}
           </div>
@@ -231,6 +283,7 @@ export default function NotesEditor({
             <div className="font-serif">
               <BlockNoteView
                 editor={editor}
+                editable={canEdit}
                 theme={theme === "dark" ? bnTheme.dark : bnTheme.light}
                 // onBlur={handleBlur}
                 className={cn(

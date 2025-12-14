@@ -19,9 +19,10 @@ import ShareDialog from "./share-dialog";
 interface NoteMenuProps {
   editor?: BlockNoteEditor | null;
   noteTitle?: string;
+  readOnly?: boolean;
 }
 
-const NoteMenu = ({ editor, noteTitle }: NoteMenuProps) => {
+const NoteMenu = ({ editor, noteTitle, readOnly = false }: NoteMenuProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild className="cursor-pointer">
@@ -31,8 +32,12 @@ const NoteMenu = ({ editor, noteTitle }: NoteMenuProps) => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <ExportMenu editor={editor} noteTitle={noteTitle} />
-        <DeleteNoteMenu />
-        <ShareDialog />
+        {!readOnly && (
+          <>
+            <DeleteNoteMenu />
+            <ShareDialog />
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

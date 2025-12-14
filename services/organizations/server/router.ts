@@ -80,6 +80,22 @@ export const organizationRouter = createTRPCRouter({
           teams: true,
           owner: true,
           notes: {
+            where: {
+              OR: [
+                { visibility: "ORG" },
+                { userId: ctx.auth.user.id },
+                {
+                  visibility: "TEAM",
+                  team: {
+                    members: {
+                      some: {
+                        userId: ctx.auth.user.id,
+                      },
+                    },
+                  },
+                },
+              ],
+            },
             include: {
               user: true,
               tags: true,

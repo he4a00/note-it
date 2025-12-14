@@ -2,6 +2,8 @@ import prisma from "@/lib/db";
 import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { z } from "zod";
 import { nanoid } from "nanoid";
+import { getUserContext, checkNotePermission } from "@/lib/permissions";
+import { TRPCError } from "@trpc/server";
 
 export const notesRouter = createTRPCRouter({
   create: protectedProcedure
@@ -62,10 +64,9 @@ export const notesRouter = createTRPCRouter({
   getOne: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      return await prisma.note.findUniqueOrThrow({
+      const note = await prisma.note.findUniqueOrThrow({
         where: {
           id: input.id,
-          userId: ctx.auth.user.id,
         },
         include: {
           folder: true,
@@ -73,6 +74,21 @@ export const notesRouter = createTRPCRouter({
           org: true,
         },
       });
+
+      const userContext = await getUserContext(ctx.auth.user.id);
+      const permissions = checkNotePermission(note, userContext);
+
+      if (!permissions.canView) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to view this note",
+        });
+      }
+
+      return {
+        ...note,
+        permissions,
+      };
     }),
 
   getAllNotes: protectedProcedure
@@ -92,22 +108,47 @@ export const notesRouter = createTRPCRouter({
       const { folderId, tagId, isPinned, isArchived, isFavorite, search } =
         input || {};
 
-      return await prisma.note.findMany({
-        where: {
-          userId: ctx.auth.user.id,
-          folderId: folderId,
-          isPinned: isPinned,
-          isArchived: isArchived,
-          isFavorite: isFavorite,
-          tags: tagId ? { some: { id: tagId } } : undefined,
-          // type: "NOTE",
+      const userContext = await getUserContext(ctx.auth.user.id);
+      const { orgMemberships, teamMemberships } = userContext;
 
-          OR: search
-            ? [
-                { title: { contains: search, mode: "insensitive" } },
-                { content: { contains: search, mode: "insensitive" } },
-              ]
-            : undefined,
+      // Filter notes where:
+      // 1. I am the owner
+      // 2. OR visibility is ORG and I am in that Org
+      // 3. OR visibility is TEAM and I am in that Team
+
+      const orgIds = orgMemberships.map((m) => m.orgId);
+      const teamIds = teamMemberships.map((m) => m.teamId);
+
+      const notes = await prisma.note.findMany({
+        where: {
+          AND: [
+            {
+              OR: [
+                { userId: ctx.auth.user.id },
+                {
+                  visibility: "ORG",
+                  orgId: { in: orgIds },
+                },
+                {
+                  visibility: "TEAM",
+                  teamId: { in: teamIds },
+                },
+              ],
+            },
+            {
+              folderId: folderId,
+              isPinned: isPinned,
+              isArchived: isArchived,
+              isFavorite: isFavorite,
+              tags: tagId ? { some: { id: tagId } } : undefined,
+              OR: search
+                ? [
+                    { title: { contains: search, mode: "insensitive" } },
+                    { content: { contains: search, mode: "insensitive" } },
+                  ]
+                : undefined,
+            },
+          ],
         },
         orderBy: {
           updatedAt: "desc",
@@ -118,6 +159,11 @@ export const notesRouter = createTRPCRouter({
           org: true,
         },
       });
+
+      return notes.map((note) => ({
+        ...note,
+        permissions: checkNotePermission(note, userContext),
+      }));
     }),
 
   update: protectedProcedure
@@ -134,10 +180,24 @@ export const notesRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // 1. Fetch existing note to check permissions
+      const existingNote = await prisma.note.findUniqueOrThrow({
+        where: { id: input.id },
+      });
+
+      const userContext = await getUserContext(ctx.auth.user.id);
+      const permissions = checkNotePermission(existingNote, userContext);
+
+      if (!permissions.canEdit) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to edit this note",
+        });
+      }
+
       const updatedNote = await prisma.note.update({
         where: {
           id: input.id,
-          userId: ctx.auth.user.id,
         },
         data: {
           title: input.title,
@@ -151,7 +211,7 @@ export const notesRouter = createTRPCRouter({
               })) || [],
           },
           visibility: input.visibility,
-          orgId: input.orgId,
+          orgId: input.orgId === "" ? null : input.orgId,
         },
         include: {
           folder: true,
@@ -160,16 +220,32 @@ export const notesRouter = createTRPCRouter({
         },
       });
 
-      return updatedNote;
+      return {
+        ...updatedNote,
+        permissions: checkNotePermission(updatedNote, userContext),
+      };
     }),
 
   delete: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
+      const note = await prisma.note.findUniqueOrThrow({
+        where: { id: input.id },
+      });
+
+      const userContext = await getUserContext(ctx.auth.user.id);
+      const permissions = checkNotePermission(note, userContext);
+
+      if (!permissions.canDelete) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You do not have permission to delete this note",
+        });
+      }
+
       return await prisma.note.delete({
         where: {
           id: input.id,
-          userId: ctx.auth.user.id,
         },
       });
     }),
